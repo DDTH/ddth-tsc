@@ -13,7 +13,7 @@
 	<packaging>jar</packaging>
 
 	<name>ddth-tsc</name>
-	<description>DDTH's Time Series Counter</description>
+	<description>DDTH's In-memory Time Series Counter</description>
 	<url>https://github.com/DDTH/ddth-tsc</url>
 
 	<licenses>
