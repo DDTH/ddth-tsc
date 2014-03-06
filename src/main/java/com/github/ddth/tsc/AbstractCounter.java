@@ -14,7 +14,6 @@ import com.google.common.primitives.Longs;
  */
 public abstract class AbstractCounter implements ICounter {
 
-    protected final static int RESOLUTION_MS = 1000; // 1 sec
     private String name;
 
     public AbstractCounter() {
@@ -131,5 +130,26 @@ public abstract class AbstractCounter implements ICounter {
         }
 
         return result;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public DataPoint[] getLastN(int n) {
+        return getLastN(n, 1);
+    }
+
+    public DataPoint[] getLastN(int n, int steps) {
+        if (steps < 1) {
+            steps = 1;
+        }
+        if (n < 1) {
+            n = 1;
+        }
+        long currentTimestamp = System.currentTimeMillis();
+        int blockSize = RESOLUTION_MS * steps;
+        long delta = currentTimestamp % blockSize;
+        long timestampStart = currentTimestamp - delta - (n - 1) * blockSize;
+        return getSeries(timestampStart, currentTimestamp + 1, steps);
     }
 }

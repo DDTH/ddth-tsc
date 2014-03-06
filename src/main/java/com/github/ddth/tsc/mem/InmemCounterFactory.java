@@ -11,6 +11,12 @@ import com.github.ddth.tsc.ICounter;
  */
 public class InmemCounterFactory extends AbstractCounterFactory {
 
+    public void init() {
+    }
+
+    public void destroy() {
+    }
+
     /**
      * {@inheritDoc}
      */

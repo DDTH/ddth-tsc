@@ -16,7 +16,7 @@ See LICENSE.txt for details. Copyright (c) 2014 Thanh Ba Nguyen.
 Third party libraries are distributed under their own licenses.
 
 
-## Installation #
+## Maven Release #
 
 Latest release version: `0.1.0`. See [RELEASE-NOTES.md](RELEASE-NOTES.md).
 
@@ -61,3 +61,10 @@ DataPoint[] lastHour = counterSiteVisits.get(timestampLastHour);
 long timestampLast15Mins = System.currentTimeMillis() - 15*60*1000; //15 mins = 900000 ms
 DataPoint[] last15MinsGroupPerMin = counterSiteVisits.get(timestampLast15Mins, 15*60); //1 min = 60 secs
 ```
+
+### ICounter methods ###
+- `add(...)`: add a value
+- `get()`: get a single data point value
+- `getSeries(...)`: get a series of data points
+- `getLastN(...)`: get last N data points
+
