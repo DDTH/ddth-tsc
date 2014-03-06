@@ -114,45 +114,4 @@ public class LastNTest extends BaseCounterTest {
         assertEquals(0, dataPoints[8].value());
         assertEquals(VALUE * NUM_LOOP * NUM_THREAD, dataPoints[9].value());
     }
-
-    // @org.junit.Test
-    // public void testSeriesDataPoints3() throws InterruptedException {
-    // final long VALUE = 13;
-    // final int NUM_LOOP = 5000;
-    // final int NUM_THREAD = 4;
-    // final ICounter counter = new InmemCounter("demo");
-    //
-    // Thread[] threads = new Thread[NUM_THREAD];
-    // for (int i = 0; i < threads.length; i++) {
-    // threads[i] = new Thread() {
-    // public void run() {
-    // for (int i = 0; i < NUM_LOOP; i++) {
-    // counter.add(VALUE);
-    // try {
-    // Thread.sleep(1);
-    // } catch (InterruptedException e) {
-    // }
-    // }
-    // }
-    // };
-    // }
-    //
-    // long timestampStart = System.currentTimeMillis();
-    // for (Thread t : threads) {
-    // t.start();
-    // }
-    // for (Thread t : threads) {
-    // t.join();
-    // }
-    // long timestampEnd = System.currentTimeMillis() + 1;
-    // DataPoint[] dataPoints = counter.getSeries(timestampStart, timestampEnd,
-    // 7);
-    // assertTrue(dataPoints.length >= 1);
-    //
-    // long value = 0;
-    // for (DataPoint dp : dataPoints) {
-    // value += dp.value();
-    // }
-    // assertEquals(VALUE * NUM_LOOP * NUM_THREAD, value);
-    // }
 }
