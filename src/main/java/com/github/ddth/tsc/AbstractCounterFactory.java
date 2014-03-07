@@ -13,6 +13,24 @@ public abstract class AbstractCounterFactory implements ICounterFactory {
     private ConcurrentHashMap<String, ICounter> counters = new ConcurrentHashMap<String, ICounter>();
 
     /**
+     * Initializing method.
+     * 
+     * @since 0.1.1
+     */
+    public void init() {
+        // EMPTY
+    }
+
+    /**
+     * Destroying method.
+     * 
+     * @since 0.1.1
+     */
+    public void destroy() {
+        // EMPTY
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override

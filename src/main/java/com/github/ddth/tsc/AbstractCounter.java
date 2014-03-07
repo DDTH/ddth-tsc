@@ -32,10 +32,18 @@ public abstract class AbstractCounter implements ICounter {
         return this;
     }
 
+    /**
+     * Initializing method.
+     */
     public void init() {
+        // EMPTY
     }
 
+    /**
+     * Destroying method.
+     */
     public void destroy() {
+        // EMPTY
     }
 
     /**
