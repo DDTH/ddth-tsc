@@ -38,11 +38,6 @@ public class InmemCounter extends AbstractCounter {
         BUFFER_NUM_BLOCKS = Math.max(DEFAULT_MAX_NUM_BLOCKS / 10, DEFAULT_BUFFER_NUM_BLOCKS);
     }
 
-    private Long calcKey(long timestamp) {
-        long delta = timestamp % RESOLUTION_MS;
-        return Long.valueOf(timestamp - delta);
-    }
-
     private void reduce() {
         Long[] keys = counter.asMap().keySet().toArray(EMPTY_LONG_ARRAY);
         Arrays.sort(keys);
@@ -56,7 +51,7 @@ public class InmemCounter extends AbstractCounter {
      */
     @Override
     public void add(long timestamp, long value) {
-        Long key = calcKey(timestamp);
+        Long key = toTimeSeriesPoint(timestamp);
         counter.addAndGet(key, value);
         if (counter.size() > maxNumBlocks) {
             reduce();
@@ -68,7 +63,7 @@ public class InmemCounter extends AbstractCounter {
      */
     @Override
     public DataPoint get(long timestampMs) {
-        Long key = calcKey(timestampMs);
+        Long key = toTimeSeriesPoint(timestampMs);
         long value = counter.get(key);
         return new DataPoint(key.longValue(), value, RESOLUTION_MS);
     }

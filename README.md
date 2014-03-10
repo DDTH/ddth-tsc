@@ -6,7 +6,9 @@ DDTH's In-memory Time Series Counter.
 Project home:
 [https://github.com/DDTH/ddth-tsc](https://github.com/DDTH/ddth-tsc)
 
-For OSGi environment, see [ddth-osgitsc](https://github.com/DDTH/ddth-osgitsc).
+OSGi environment: ddth-tsc is packaged as an OSGi bundle.
+
+Note: for persistent Time Series Counter, consider using [ddth-tsc-cassandra](https://github.com/DDTH/ddth-tsc-cassandra).
 
 
 ## License ##
@@ -18,7 +20,7 @@ Third party libraries are distributed under their own licenses.
 
 ## Maven Release #
 
-Latest release version: `0.1.1`. See [RELEASE-NOTES.md](RELEASE-NOTES.md).
+Latest release version: `0.2.0`. See [RELEASE-NOTES.md](RELEASE-NOTES.md).
 
 Maven dependency:
 
@@ -26,7 +28,7 @@ Maven dependency:
 <dependency>
 	<groupId>com.github.ddth</groupId>
 	<artifactId>ddth-tsc</artifactId>
-	<version>0.1.1</version>
+	<version>0.2.0</version>
 </dependency>
 ```
 

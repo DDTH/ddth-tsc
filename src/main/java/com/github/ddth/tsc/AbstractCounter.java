@@ -47,6 +47,18 @@ public abstract class AbstractCounter implements ICounter {
     }
 
     /**
+     * Converts a timestamp to time series point.
+     * 
+     * @param timestampMs
+     * @return
+     * @since 0.2.0
+     */
+    protected Long toTimeSeriesPoint(long timestampMs) {
+        long delta = timestampMs % RESOLUTION_MS;
+        return Long.valueOf(timestampMs - delta);
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -83,8 +95,13 @@ public abstract class AbstractCounter implements ICounter {
         return getSeries(timestampStartMs, timestampEndMs, 1);
     }
 
-    /*
-     * //TODO review performance?
+    /**
+     * Gets all data points in range [{@code timestampStartMs},
+     * {@code timestampEndMs}).
+     * 
+     * @param timestampStartMs
+     * @param timestampEndMs
+     * @return
      */
     private DataPoint[] _get(long timestampStartMs, long timestampEndMs) {
         SortedSet<DataPoint> result = new TreeSet<DataPoint>(new Comparator<DataPoint>() {
@@ -93,7 +110,12 @@ public abstract class AbstractCounter implements ICounter {
                 return Longs.compare(block1.timestamp(), block2.timestamp());
             }
         });
-        for (long timestamp = timestampStartMs; timestamp < timestampEndMs; timestamp++) {
+        Long keyStart = toTimeSeriesPoint(timestampStartMs);
+        Long keyEnd = toTimeSeriesPoint(timestampEndMs);
+        if (keyEnd.longValue() == timestampStartMs) {
+            keyEnd = toTimeSeriesPoint(timestampEndMs - 1);
+        }
+        for (long timestamp = keyStart.longValue(), _end = keyEnd.longValue(); timestamp <= _end; timestamp += RESOLUTION_MS) {
             DataPoint block = get(timestamp);
             result.add(block);
         }

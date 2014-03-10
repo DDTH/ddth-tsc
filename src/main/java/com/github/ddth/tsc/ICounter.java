@@ -28,14 +28,14 @@ public interface ICounter {
     public final static int LAST_DAY = 24 * 60 * 60;
 
     /**
-     * Adds a value, uses {@code System.currentTimeMillis()} as key.
+     * Adds a value to data point at {@code System.currentTimeMillis()}.
      * 
      * @param value
      */
     public void add(long value);
 
     /**
-     * Adds a value, key specified by the supplied timestamp.
+     * Adds a value to data point at {@code timestampMs}.
      * 
      * @param timestampMs
      *            UNIX timestamp in millisec
@@ -54,8 +54,8 @@ public interface ICounter {
     public DataPoint get(long timestampMs);
 
     /**
-     * Gets time series data from {@code timestampStartMs} to
-     * {@link System#currentTimeMillis()} with step of 1.
+     * Gets time series data in range [{@code timestampStartMs},
+     * {@link System#currentTimeMillis()}) with step of 1.
      * 
      * @param timestampStartMs
      * @return
@@ -64,8 +64,8 @@ public interface ICounter {
     public DataPoint[] getSeries(long timestampStartMs);
 
     /**
-     * Gets time series data from {@code timestampStartMs} to
-     * {@link System#currentTimeMillis()} with specified steps.
+     * Gets time series data in range [{@code timestampStartMs},
+     * {@link System#currentTimeMillis()}) with specified steps.
      * 
      * @param timestampStartMs
      * @param steps
@@ -75,8 +75,8 @@ public interface ICounter {
     public DataPoint[] getSeries(long timestampStartMs, int steps);
 
     /**
-     * Gets time series data from {@code timestampStartMs} to
-     * {@code timestampEndMs} with step of 1.
+     * Gets time series data in range [{@code timestampStartMs},
+     * {@code timestampEndMs}) with step of 1.
      * 
      * @param timestampStartMs
      * @param timestampEndMs
@@ -85,8 +85,8 @@ public interface ICounter {
     public DataPoint[] getSeries(long timestampStartMs, long timestampEndMs);
 
     /**
-     * Gets time series data from {@code timestampStartMs} (inclusive) to
-     * {@code timestampEndMs} (exclusive) with specified steps.
+     * Gets time series data in range [{@code timestampStartMs},
+     * {@code timestampEndMs}) with specified steps.
      * 
      * <ul>
      * <li>{@code timestampStartMs} must be less than or equals to

@@ -1,6 +1,13 @@
 package com.github.ddth.tsc;
 
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
 
 /**
  * Abstract implementation of {@link ICounterFactory}.
@@ -10,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public abstract class AbstractCounterFactory implements ICounterFactory {
 
-    private ConcurrentHashMap<String, ICounter> counters = new ConcurrentHashMap<String, ICounter>();
+    private LoadingCache<String, ICounter> counterCache;
 
     /**
      * Initializing method.
@@ -18,7 +25,21 @@ public abstract class AbstractCounterFactory implements ICounterFactory {
      * @since 0.1.1
      */
     public void init() {
-        // EMPTY
+        int numProcessors = Runtime.getRuntime().availableProcessors();
+        counterCache = CacheBuilder.newBuilder().concurrencyLevel(numProcessors)
+                .expireAfterAccess(24, TimeUnit.HOURS)
+                .removalListener(new RemovalListener<String, ICounter>() {
+                    @Override
+                    public void onRemoval(RemovalNotification<String, ICounter> notification) {
+                        ICounter counter = notification.getValue();
+                        destroyCounter(counter);
+                    }
+                }).build(new CacheLoader<String, ICounter>() {
+                    @Override
+                    public ICounter load(String key) throws Exception {
+                        return createCounter(key);
+                    }
+                });
     }
 
     /**
@@ -27,7 +48,10 @@ public abstract class AbstractCounterFactory implements ICounterFactory {
      * @since 0.1.1
      */
     public void destroy() {
-        // EMPTY
+        if (counterCache != null) {
+            counterCache.invalidateAll();
+            counterCache = null;
+        }
     }
 
     /**
@@ -35,12 +59,11 @@ public abstract class AbstractCounterFactory implements ICounterFactory {
      */
     @Override
     public ICounter getCounter(String name) {
-        ICounter counter = counters.get(name);
-        if (counter == null) {
-            counter = createCounter(name);
-            counters.putIfAbsent(name, counter);
+        try {
+            return counterCache.get(name);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
         }
-        return counter;
     }
 
     /**
@@ -50,4 +73,19 @@ public abstract class AbstractCounterFactory implements ICounterFactory {
      * @return
      */
     protected abstract ICounter createCounter(String name);
+
+    /**
+     * Destroys and removes a counter from the cache.
+     * 
+     * @param counter
+     * @since 0.2.0
+     */
+    protected void destroyCounter(ICounter counter) {
+        try {
+            if (counter instanceof AbstractCounter) {
+                ((AbstractCounter) counter).destroy();
+            }
+        } catch (Exception e) {
+        }
+    }
 }
