@@ -44,7 +44,8 @@ Sample code:
 
 ```java
 //first: we need a counter factory
-ICounterFactory counterFactory = new InmemCounterFactory();
+InmemCounterFactory counterFactory = new InmemCounterFactory();
+counterFactory.init();
 
 //second: we need the counter
 ICounter countSiteVisits = counterFactory.getCounter("my-site-visits");
@@ -62,6 +63,9 @@ DataPoint[] lastHour = counterSiteVisits.get(timestampLastHour);
 
 long timestampLast15Mins = System.currentTimeMillis() - 15*60*1000; //15 mins = 900000 ms
 DataPoint[] last15MinsGroupPerMin = counterSiteVisits.get(timestampLast15Mins, 15*60); //1 min = 60 secs
+
+//destroy the counter factory when done
+couterFactory.destroy();
 ```
 
 ### ICounter methods ###
