@@ -154,6 +154,31 @@ public class DataPoint implements Serializable, Cloneable {
         return this;
     }
 
+    private void _cloneFrom(DataPoint another) {
+        value = another.value;
+        numPoints = another.numPoints;
+        type = another.type;
+    }
+
+    /**
+     * Adds value from another data point.
+     * 
+     * @param another
+     * @return
+     * @since 0.3.0
+     */
+    public DataPoint add(DataPoint another) {
+        if (type == Type.NONE) {
+            _cloneFrom(another);
+        } else {
+            if (another.type != Type.NONE) {
+                add(another.value());
+            }
+        }
+
+        return this;
+    }
+
     /**
      * Adds a value to the data point.
      * 
@@ -185,6 +210,25 @@ public class DataPoint implements Serializable, Cloneable {
     }
 
     /**
+     * Sets data point's value using another data point.
+     * 
+     * @param another
+     * @return
+     * @since 0.3.0
+     */
+    public DataPoint set(DataPoint another) {
+        if (type == Type.NONE) {
+            _cloneFrom(another);
+        } else {
+            if (another.type != Type.NONE) {
+                set(another.value());
+            }
+        }
+
+        return this;
+    }
+
+    /**
      * Sets data point's value to a specific value.
      * 
      * @param value
@@ -209,6 +253,8 @@ public class DataPoint implements Serializable, Cloneable {
         switch (type) {
         case AVERAGE:
             return numPoints != 0 ? value / numPoints : 0;
+        case NONE:
+            return 0;
         case MAXIMUM:
         case MINIMUM:
         case SUM:

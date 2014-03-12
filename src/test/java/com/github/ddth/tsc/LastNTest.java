@@ -3,6 +3,7 @@ package com.github.ddth.tsc;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
+import com.github.ddth.tsc.DataPoint.Type;
 import com.github.ddth.tsc.mem.InmemCounter;
 
 /**
@@ -30,7 +31,7 @@ public class LastNTest extends BaseCounterTest {
     }
 
     @org.junit.Test
-    public void testLastN() throws InterruptedException {
+    public void testLastN1() throws InterruptedException {
         final long VALUE = 7;
         final int NUM_LOOP = 1000;
         final int NUM_THREAD = 4;
@@ -61,7 +62,9 @@ public class LastNTest extends BaseCounterTest {
 
         long value = 0;
         for (DataPoint dp : dataPoints) {
-            value += dp.value();
+            if (dp.type() != Type.NONE) {
+                value += dp.value();
+            }
         }
         assertEquals(VALUE * NUM_LOOP * NUM_THREAD, value);
     }

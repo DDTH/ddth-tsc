@@ -232,7 +232,7 @@ public abstract class AbstractCounter implements ICounter {
                 block = new DataPoint(type, t, 0, blockSize);
                 result[resultIndex] = block;
             }
-            block.add(org.value());
+            block.add(org);
 
             orgIndex++;
         }
