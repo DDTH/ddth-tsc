@@ -4,6 +4,7 @@ import java.util.Comparator;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import com.github.ddth.tsc.DataPoint.Type;
 import com.google.common.primitives.Longs;
 
 /**
@@ -23,6 +24,10 @@ public abstract class AbstractCounter implements ICounter {
         setName(name);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public String getName() {
         return name;
     }
@@ -59,6 +64,19 @@ public abstract class AbstractCounter implements ICounter {
     }
 
     /**
+     * Converts a timestamp to time series point.
+     * 
+     * @param timestampMs
+     * @param steps
+     * @return
+     * @since 0.3.0
+     */
+    protected Long toTimeSeriesPoint(long timestampMs, int steps) {
+        long delta = timestampMs % (RESOLUTION_MS * steps);
+        return Long.valueOf(timestampMs - delta);
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -70,7 +88,33 @@ public abstract class AbstractCounter implements ICounter {
      * {@inheritDoc}
      */
     @Override
-    public abstract void add(long timestamp, long value);
+    public abstract void add(long timestampMs, long value);
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void set(long value) {
+        set(System.currentTimeMillis(), value);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public abstract void set(long timestampMs, long value);
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public abstract DataPoint get(long timestampMs);
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public abstract DataPoint get(long timestampMs, DataPoint.Type type, int steps);
 
     /**
      * {@inheritDoc}
@@ -84,6 +128,14 @@ public abstract class AbstractCounter implements ICounter {
      * {@inheritDoc}
      */
     @Override
+    public DataPoint[] getSeries(long timestampStartMs, DataPoint.Type type) {
+        return getSeries(timestampStartMs, 1, type);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public DataPoint[] getSeries(long timestampStartMs, int steps) {
         return getSeries(timestampStartMs, System.currentTimeMillis(), steps);
     }
@@ -91,8 +143,25 @@ public abstract class AbstractCounter implements ICounter {
     /**
      * {@inheritDoc}
      */
+    @Override
+    public DataPoint[] getSeries(long timestampStartMs, int steps, DataPoint.Type type) {
+        return getSeries(timestampStartMs, System.currentTimeMillis(), steps, type);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public DataPoint[] getSeries(long timestampStartMs, long timestampEndMs) {
         return getSeries(timestampStartMs, timestampEndMs, 1);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public DataPoint[] getSeries(long timestampStartMs, long timestampEndMs, DataPoint.Type type) {
+        return getSeries(timestampStartMs, timestampEndMs, 1, type);
     }
 
     /**
@@ -127,6 +196,15 @@ public abstract class AbstractCounter implements ICounter {
      */
     @Override
     public DataPoint[] getSeries(long timestampStartMs, long timestampEndMs, int steps) {
+        return getSeries(timestampStartMs, timestampEndMs, steps, DataPoint.Type.SUM);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public DataPoint[] getSeries(long timestampStartMs, long timestampEndMs, int steps,
+            DataPoint.Type type) {
         DataPoint[] origin = _get(timestampStartMs, timestampEndMs);
 
         if (steps < 1) {
@@ -151,7 +229,7 @@ public abstract class AbstractCounter implements ICounter {
                 long t = org.timestamp();
                 long delta = t % blockSize;
                 t -= delta;
-                block = new DataPoint(t, 0, blockSize);
+                block = new DataPoint(type, t, 0, blockSize);
                 result[resultIndex] = block;
             }
             block.add(org.value());
@@ -165,11 +243,32 @@ public abstract class AbstractCounter implements ICounter {
     /**
      * {@inheritDoc}
      */
+    @Override
     public DataPoint[] getLastN(int n) {
-        return getLastN(n, 1);
+        return getLastN(n, 1, Type.SUM);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public DataPoint[] getLastN(int n, DataPoint.Type type) {
+        return getLastN(n, 1, type);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public DataPoint[] getLastN(int n, int steps) {
+        return getLastN(n, steps, Type.SUM);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public DataPoint[] getLastN(int n, int steps, DataPoint.Type type) {
         if (steps < 1) {
             steps = 1;
         }
@@ -180,6 +279,6 @@ public abstract class AbstractCounter implements ICounter {
         int blockSize = RESOLUTION_MS * steps;
         long delta = currentTimestamp % blockSize;
         long timestampStart = currentTimestamp - delta - (n - 1) * blockSize;
-        return getSeries(timestampStart, currentTimestamp + 1, steps);
+        return getSeries(timestampStart, currentTimestamp + 1, steps, type);
     }
 }

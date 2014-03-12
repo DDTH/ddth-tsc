@@ -20,7 +20,7 @@ Third party libraries are distributed under their own licenses.
 
 ## Maven Release #
 
-Latest release version: `0.2.0`. See [RELEASE-NOTES.md](RELEASE-NOTES.md).
+Latest release version: `0.3.0`. See [RELEASE-NOTES.md](RELEASE-NOTES.md).
 
 Maven dependency:
 
@@ -28,7 +28,7 @@ Maven dependency:
 <dependency>
 	<groupId>com.github.ddth</groupId>
 	<artifactId>ddth-tsc</artifactId>
-	<version>0.2.0</version>
+	<version>0.3.0</version>
 </dependency>
 ```
 
@@ -70,7 +70,7 @@ couterFactory.destroy();
 
 ### ICounter methods ###
 - `add(...)`: add a value
+- `set(...)`: set a value
 - `get()`: get a single data point value
 - `getSeries(...)`: get a series of data points
 - `getLastN(...)`: get last N data points
-

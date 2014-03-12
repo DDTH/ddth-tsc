@@ -30,7 +30,7 @@ public class SingleDataPointTest extends BaseCounterTest {
     }
 
     @org.junit.Test
-    public void testSingleDataPoint() {
+    public void testSingleDataPoint1() {
         final long VALUE = 2;
 
         long timestamp = System.currentTimeMillis();

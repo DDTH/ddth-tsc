@@ -1,6 +1,12 @@
 ddth-tsc release notes
 ======================
 
+0.3.0 - 2014-03-12
+------------------
+- Add `ICounter.set()` methods.
+- Add aggregation support.
+
+
 0.2.0 - 2014-03-10
 ------------------
 - Packaged as OSGi bundle.

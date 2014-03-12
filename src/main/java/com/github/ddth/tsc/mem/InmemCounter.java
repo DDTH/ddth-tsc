@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import com.github.ddth.tsc.AbstractCounter;
 import com.github.ddth.tsc.DataPoint;
+import com.github.ddth.tsc.DataPoint.Type;
 import com.google.common.util.concurrent.AtomicLongMap;
 
 /**
@@ -50,9 +51,21 @@ public class InmemCounter extends AbstractCounter {
      * {@inheritDoc}
      */
     @Override
-    public void add(long timestamp, long value) {
-        Long key = toTimeSeriesPoint(timestamp);
+    public void add(long timestampMs, long value) {
+        Long key = toTimeSeriesPoint(timestampMs);
         counter.addAndGet(key, value);
+        if (counter.size() > maxNumBlocks) {
+            reduce();
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void set(long timestampMs, long value) {
+        Long key = toTimeSeriesPoint(timestampMs);
+        counter.put(key, value);
         if (counter.size() > maxNumBlocks) {
             reduce();
         }
@@ -64,7 +77,31 @@ public class InmemCounter extends AbstractCounter {
     @Override
     public DataPoint get(long timestampMs) {
         Long key = toTimeSeriesPoint(timestampMs);
-        long value = counter.get(key);
-        return new DataPoint(key.longValue(), value, RESOLUTION_MS);
+        if (counter.containsKey(key)) {
+            long value = counter.get(key);
+            return new DataPoint(Type.SUM, key.longValue(), value, RESOLUTION_MS);
+        } else {
+            return new DataPoint(Type.NONE, key.longValue(), 0, RESOLUTION_MS);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public DataPoint get(long timestampMs, DataPoint.Type type, int steps) {
+        int blockSize = steps * RESOLUTION_MS;
+        Long key = toTimeSeriesPoint(timestampMs, steps);
+        DataPoint result = new DataPoint().type(type).blockSize(blockSize)
+                .timestamp(key.longValue());
+        long _key = key.longValue();
+        for (int i = 0; i < steps; i++) {
+            if (counter.containsKey(_key)) {
+                long value = counter.get(_key);
+                result.add(value);
+            }
+            _key += RESOLUTION_MS;
+        }
+        return result;
     }
 }
