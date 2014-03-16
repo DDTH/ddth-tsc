@@ -58,6 +58,7 @@
 			<artifactId>org.osgi.core</artifactId>
 			<version>${version.osgi}</version>
 			<scope>provided</scope>
+			<optional>true</optional>
 		</dependency>
 
 		<dependency>
