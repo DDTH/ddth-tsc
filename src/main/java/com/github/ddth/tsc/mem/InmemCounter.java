@@ -8,7 +8,13 @@ import com.github.ddth.tsc.DataPoint.Type;
 import com.google.common.util.concurrent.AtomicLongMap;
 
 /**
- * //TODO
+ * In-memory time series counter.
+ * 
+ * <ul>
+ * <li>Support both {@code add()} and {@code get()} operators.</li>
+ * <li>No persistent.</li>
+ * <li>Store historical data for about 1 day (~86400 data points)</li>
+ * </ul>
  * 
  * @author Thanh Nguyen <btnguyen2k@gmail.com>
  * @since 0.1.0
@@ -38,6 +44,8 @@ public class InmemCounter extends AbstractCounter {
         super.init();
         BUFFER_NUM_BLOCKS = Math.max(DEFAULT_MAX_NUM_BLOCKS / 10, DEFAULT_BUFFER_NUM_BLOCKS);
     }
+
+    /*----------------------------------------------------------------------*/
 
     private void reduce() {
         Long[] keys = counter.asMap().keySet().toArray(EMPTY_LONG_ARRAY);
