@@ -42,7 +42,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<version.java>1.6</version.java>
 		<version.osgi>4.3.0</version.osgi>
-		<version.guava>16.0</version.guava>
+		<version.guava>13.0</version.guava>
 	</properties>
 
 	<dependencies>
@@ -65,7 +65,6 @@
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
 			<version>${version.guava}</version>
-			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 

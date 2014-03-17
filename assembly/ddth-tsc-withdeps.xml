@@ -32,12 +32,11 @@
 		<dependencySet>
 			<outputDirectory></outputDirectory>
 			<useProjectArtifact>true</useProjectArtifact>
-			<scope>provided</scope>
+			<!-- <scope>provided</scope> -->
 			<useTransitiveDependencies>true</useTransitiveDependencies>
 			<excludes>
 				<exclude>org.osgi:*</exclude>
 			</excludes>
-			<!-- <includes> <include>*:*</include> </includes> -->
 		</dependencySet>
 	</dependencySets>
 </assembly>
