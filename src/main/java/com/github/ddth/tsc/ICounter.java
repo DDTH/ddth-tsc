@@ -10,17 +10,17 @@ public interface ICounter {
 
     public final static int RESOLUTION_MS = 1000; // 1 sec
 
-    public final static int STEPS_1_SEC = RESOLUTION_MS;
-    public final static int STEPS_5_SECS = 5 * RESOLUTION_MS;
-    public final static int STEPS_10_SECS = 10 * RESOLUTION_MS;
-    public final static int STEPS_15_SECS = 15 * RESOLUTION_MS;
-    public final static int STEPS_30_SECS = 30 * RESOLUTION_MS;
-    public final static int STEPS_1_MIN = 60 * RESOLUTION_MS;
-    public final static int STEPS_5_MINS = 5 * 60 * RESOLUTION_MS;
-    public final static int STEPS_10_MINS = 10 * 60 * RESOLUTION_MS;
-    public final static int STEPS_15_MINS = 15 * 60 * RESOLUTION_MS;
-    public final static int STEPS_30_MINS = 30 * 60 * RESOLUTION_MS;
-    public final static int STEPS_1_HOUR = 60 * 60 * RESOLUTION_MS;
+    public final static int STEPS_1_SEC = 1;
+    public final static int STEPS_5_SECS = 5 * STEPS_1_SEC;
+    public final static int STEPS_10_SECS = 10 * STEPS_1_SEC;
+    public final static int STEPS_15_SECS = 15 * STEPS_1_SEC;
+    public final static int STEPS_30_SECS = 30 * STEPS_1_SEC;
+    public final static int STEPS_1_MIN = 60 * STEPS_1_SEC;
+    public final static int STEPS_5_MINS = 5 * 60 * STEPS_1_SEC;
+    public final static int STEPS_10_MINS = 10 * 60 * STEPS_1_SEC;
+    public final static int STEPS_15_MINS = 15 * 60 * STEPS_1_SEC;
+    public final static int STEPS_30_MINS = 30 * 60 * STEPS_1_SEC;
+    public final static int STEPS_1_HOUR = 60 * 60 * STEPS_1_SEC;
 
     public final static int LAST_SEC = 1;
     public final static int LAST_MIN = 60;
