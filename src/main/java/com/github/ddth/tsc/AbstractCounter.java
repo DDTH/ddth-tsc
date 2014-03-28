@@ -171,8 +171,9 @@ public abstract class AbstractCounter implements ICounter {
      * @param timestampStartMs
      * @param timestampEndMs
      * @return
+     * @since 0.3.2
      */
-    private DataPoint[] _get(long timestampStartMs, long timestampEndMs) {
+    protected DataPoint[] getAllInRange(long timestampStartMs, long timestampEndMs) {
         SortedSet<DataPoint> result = new TreeSet<DataPoint>(new Comparator<DataPoint>() {
             @Override
             public int compare(DataPoint block1, DataPoint block2) {
@@ -205,7 +206,7 @@ public abstract class AbstractCounter implements ICounter {
     @Override
     public DataPoint[] getSeries(long timestampStartMs, long timestampEndMs, int steps,
             DataPoint.Type type) {
-        DataPoint[] origin = _get(timestampStartMs, timestampEndMs);
+        DataPoint[] origin = getAllInRange(timestampStartMs, timestampEndMs);
 
         if (steps < 1) {
             steps = 1;
