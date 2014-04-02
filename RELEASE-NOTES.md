@@ -1,6 +1,11 @@
 ddth-tsc release notes
 ======================
 
+0.4.0.1 - 2014-04-03
+--------------------
+- `ddth-tsc-redis`: minor storage space optimization.
+
+
 0.4.0 - 2014-04-02
 ------------------
 - `ddth-tsc-inmem` and `ddth-tsc-cassandra` are now sub-projects of `ddth-tsc`.
