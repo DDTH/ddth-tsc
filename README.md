@@ -1,14 +1,12 @@
 ddth-tsc
 ========
 
-DDTH's In-memory Time Series Counter.
+DDTH's Time Series Counter.
 
 Project home:
 [https://github.com/DDTH/ddth-tsc](https://github.com/DDTH/ddth-tsc)
 
-OSGi environment: ddth-tsc is packaged as an OSGi bundle.
-
-Note: for persistent Time Series Counter, consider using [ddth-tsc-cassandra](https://github.com/DDTH/ddth-tsc-cassandra).
+OSGi environment: ddth-tsc modules are packaged as an OSGi bundle.
 
 
 ## License ##
@@ -18,19 +16,23 @@ See LICENSE.txt for details. Copyright (c) 2014 Thanh Ba Nguyen.
 Third party libraries are distributed under their own licenses.
 
 
-## Maven Release #
+## Modules #
 
-Latest release version: `0.3.2`. See [RELEASE-NOTES.md](RELEASE-NOTES.md).
+ddth-tsc modules are released via Maven. Latest release version: `0.4.0`. See [RELEASE-NOTES.md](RELEASE-NOTES.md).
 
 Maven dependency:
 
 ```xml
 <dependency>
 	<groupId>com.github.ddth</groupId>
-	<artifactId>ddth-tsc</artifactId>
-	<version>0.3.2</version>
+	<artifactId>ddth-tsc-<module></artifactId>
+	<version>0.4.0</version>
 </dependency>
 ```
+
+- [`ddth-tsc`](ddth-tsc-inmem/): in-memory counter. Maven artifactId: `ddth-tsc`.
+- [`ddth-tsc-cassandra`](ddth-tsc-cassandra/): persistent counter using Cassandra as storage backend. Maven artifactId: `ddth-tsc-cassandra` (requires `ddth-tsc`).
+- [`ddth-tsc-redis`](ddth-tsc-redis/): counter using Redis as storage backend. Maven artifactId: `ddth-tsc-redis` (requires `ddth-tsc`).
 
 
 ## Usage ##
@@ -40,31 +42,60 @@ Use `ddth-tsc` to count things for a period of time. Such as:
 - How does my application's memory usage look like for the last hour?
 - How many hits per minute to my web site during 9AM to 11AM?
 
-Sample code:
+Step 1: obtain the counter factory
 
 ```java
-//first: we need a counter factory
-InmemCounterFactory counterFactory = new InmemCounterFactory();
-counterFactory.init();
+//in-memory counter factory
+ICounterFactory counterFactory = new InmemCounterFactory().init();
 
-//second: we need the counter
+//Cassandra counter factory
+ICounterFactory counterFactory = new CassandraCounterFactory()
+    .setHost("localhost")
+    .setPort(9042)
+    .setKeyspace("mykeyspace")
+    .setTableTemplate("counter_tablename_template")
+    .init();
+    
+//Redis counter factory
+PoolConfig poolConfig = new PoolConfig()
+    .setMaxActive(10).
+    .setMaxIdle(8)
+    .setMinIdle(2);
+ICounterFactory counterFactory = new RedisCounterFactory()
+    .setHost("localhost")
+    .setPort(6379)
+    .setRedisPoolConfig(poolConfig)
+    .init();
+```
+
+Step 2: obtain counters from the counter factory
+
+```java
 ICounter countSiteVisits = counterFactory.getCounter("my-site-visits");
 
-//third: count!
-  //there is one visit to my site
+ICounter myCounter = counterFactory.getCounter("counter-name");
+```
+
+Step 3: count!
+
+```java
+//there is one visit to my site
 counterSiteVisits.add(1);
 
-  //at a specific time, there are 3 visits to my site
+//at a specific time, there are 3 visits to my site
 counterSiteVisits.add(unixTimestampMs, 3);
 
-//last: get the data out
+//and get the data out
 long timestampLastHour = System.currentTimeMillis() - 3600000;
 DataPoint[] lastHour = counterSiteVisits.get(timestampLastHour);
 
 long timestampLast15Mins = System.currentTimeMillis() - 15*60*1000; //15 mins = 900000 ms
 DataPoint[] last15MinsGroupPerMin = counterSiteVisits.get(timestampLast15Mins, 15*60); //1 min = 60 secs
+```
 
-//destroy the counter factory when done
+Finally: destroy the factory when done
+
+```java
 couterFactory.destroy();
 ```
 
