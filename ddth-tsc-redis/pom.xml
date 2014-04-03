@@ -4,11 +4,11 @@
 	<parent>
 		<groupId>com.github.ddth</groupId>
 		<artifactId>ddth-tsc-parent</artifactId>
-		<version>0.4.0.3-SNAPSHOT</version>
+		<version>0.4.0.3</version>
 	</parent>
 
 	<artifactId>ddth-tsc-redis</artifactId>
-	<version>0.4.0.3-SNAPSHOT</version>
+	<version>0.4.0.3</version>
 	<packaging>bundle</packaging>
 
 	<name>ddth-tsc-redis</name>
@@ -23,7 +23,7 @@
 	</repositories>
 
 	<properties>
-		<version.ddth-tsc>0.4.0.3-SNAPSHOT</version.ddth-tsc>
+		<version.ddth-tsc>0.4.0.3</version.ddth-tsc>
 		<version.ddth-commons>0.2.1.1</version.ddth-commons>
 		<version.ddth-redis>0.2.2</version.ddth-redis>
 	</properties>
