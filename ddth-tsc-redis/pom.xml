@@ -23,7 +23,7 @@
 	</repositories>
 
 	<properties>
-		<version.ddth-tsc>0.4.0</version.ddth-tsc>
+		<version.ddth-tsc>0.4.0.3-SNAPSHOT</version.ddth-tsc>
 		<version.ddth-commons>0.2.1.1</version.ddth-commons>
 		<version.ddth-redis>0.2.2</version.ddth-redis>
 	</properties>

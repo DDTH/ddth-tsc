@@ -17,7 +17,7 @@
 
 	<properties>
 		<version.datastax-cassandra>2.0.1</version.datastax-cassandra>
-		<version.ddth-tsc>0.4.0</version.ddth-tsc>
+		<version.ddth-tsc>0.4.0.3-SNAPSHOT</version.ddth-tsc>
 		<version.ddth-commons>0.2.1.1</version.ddth-commons>
 	</properties>
 
