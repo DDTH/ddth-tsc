@@ -1,6 +1,13 @@
 ddth-tsc release notes
 ======================
 
+0.4.0.4 - 2014-04-18
+--------------------
+- `ddth-tsc-cassandra`: bug fix.
+- `ddth-tsc-redis`: performance improvement.
+- Bugs fix
+
+
 0.4.0.3 - 2014-04-03
 --------------------
 - `ddth-tsc-redis`: minor storage space optimization.

@@ -28,7 +28,8 @@ public class CassandraCounterFactory extends AbstractCounterFactory {
 			.getLogger(CassandraCounterFactory.class);
 
 	private List<String> hosts = new ArrayList<String>();
-	private String keyspace;
+	private String keyspace,
+			tableMetadata = MetadataManager.DEFAULT_METADATA_TABLE;
 	private int port = 9042;
 	private boolean myOwnCluster = false;
 	private Cluster cluster;
@@ -91,6 +92,15 @@ public class CassandraCounterFactory extends AbstractCounterFactory {
 		return this;
 	}
 
+	public String getTableMetadata() {
+		return tableMetadata;
+	}
+
+	public CassandraCounterFactory setTableMetadata(String tableMetadata) {
+		this.tableMetadata = tableMetadata;
+		return this;
+	}
+
 	public CassandraCounterFactory setCluster(Cluster cluster) {
 		if (session != null) {
 			session.close();
@@ -124,7 +134,7 @@ public class CassandraCounterFactory extends AbstractCounterFactory {
 
 		metadataManager = new MetadataManager();
 		metadataManager.setCluster(cluster).setKeyspace(keyspace)
-				.setTableMetadata(MetadataManager.DEFAULT_METADATA_TABLE);
+				.setTableMetadata(tableMetadata);
 		metadataManager.init();
 
 		return (CassandraCounterFactory) super.init();
