@@ -1,6 +1,11 @@
 ddth-tsc-cassandra release notes
 ================================
 
+0.4.1 - 2014-07-22
+------------------
+- New classes `FastCassandraCounterFactory` and `FastCassandraCounter`.
+
+
 0.4.0.4 - 2014-04-18
 --------------------
 - Bug fix.

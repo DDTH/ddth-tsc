@@ -11,7 +11,7 @@ Counter Factory:
 
 ```java
 PoolConfig poolConfig = new PoolConfig()
-    .setMaxActive(10).
+    .setMaxActive(10)
     .setMaxIdle(8)
     .setMinIdle(2);
 ICounterFactory counterFactory = new RedisCounterFactory()

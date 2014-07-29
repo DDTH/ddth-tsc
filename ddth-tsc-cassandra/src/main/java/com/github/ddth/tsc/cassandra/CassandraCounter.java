@@ -41,9 +41,17 @@ public class CassandraCounter extends AbstractCounter {
         setSession(session).setMetadata(metadata);
     }
 
+    protected Session getSession() {
+        return session;
+    }
+
     public CassandraCounter setSession(Session session) {
         this.session = session;
         return this;
+    }
+
+    protected CounterMetadata getMetadata() {
+        return metadata;
     }
 
     public CassandraCounter setMetadata(CounterMetadata metadata) {
@@ -90,7 +98,7 @@ public class CassandraCounter extends AbstractCounter {
 
     /*----------------------------------------------------------------------*/
 
-    private static int[] toYYYYMM_DD(long timestampMs) {
+    protected static int[] toYYYYMM_DD(long timestampMs) {
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(timestampMs);
 

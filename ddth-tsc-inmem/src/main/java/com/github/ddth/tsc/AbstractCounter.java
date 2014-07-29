@@ -196,7 +196,7 @@ public abstract class AbstractCounter implements ICounter {
 			DataPoint block = get(timestamp);
 			result.add(block);
 		}
-		return result.toArray(DataPoint.EMPTY_COUNTER_BLOCK_ARR);
+		return result.toArray(DataPoint.EMPTY_ARR);
 	}
 
 	/**

@@ -25,7 +25,7 @@ public class DataPoint implements Serializable, Cloneable {
 
     private static final long serialVersionUID = 1L;
 
-    public final static DataPoint[] EMPTY_COUNTER_BLOCK_ARR = new DataPoint[0];
+    public final static DataPoint[] EMPTY_ARR = new DataPoint[0];
 
     /**
      * Data point type:

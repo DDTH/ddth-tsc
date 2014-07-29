@@ -14,6 +14,6 @@ ICounterFactory counterFactory = new CassandraCounterFactory()
     .setHost("localhost")
     .setPort(9042)
     .setKeyspace("mykeyspace")
-    .setTableTemplate("counter_tablename_template")
+    .setTableMetadata("counter_tablename_template")
     .init();
 ```
