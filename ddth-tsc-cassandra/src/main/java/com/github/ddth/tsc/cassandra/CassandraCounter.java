@@ -5,21 +5,19 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.github.ddth.cacheadapter.ICache;
+import com.github.ddth.cacheadapter.ICacheFactory;
 import com.github.ddth.tsc.AbstractCounter;
+import com.github.ddth.tsc.AbstractCounterFactory;
 import com.github.ddth.tsc.DataPoint;
 import com.github.ddth.tsc.DataPoint.Type;
 import com.github.ddth.tsc.cassandra.internal.CassandraUtils;
 import com.github.ddth.tsc.cassandra.internal.CounterMetadata;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 
 /**
  * Cassandra-backed counter.
@@ -32,6 +30,7 @@ public class CassandraCounter extends AbstractCounter {
     private Session session;
     private PreparedStatement pStmAdd, pStmSet, pStmGet, pStmGetRow;
     private CounterMetadata metadata;
+    private ICacheFactory cacheFactory;
 
     public CassandraCounter() {
     }
@@ -57,6 +56,15 @@ public class CassandraCounter extends AbstractCounter {
     public CassandraCounter setMetadata(CounterMetadata metadata) {
         this.metadata = metadata;
         return this;
+    }
+
+    public CassandraCounter setCacheFactory(ICacheFactory cacheFactory) {
+        this.cacheFactory = cacheFactory;
+        return this;
+    }
+
+    protected ICacheFactory getCacheFactory() {
+        return cacheFactory;
     }
 
     private void _initPreparedStatements() {
@@ -96,6 +104,30 @@ public class CassandraCounter extends AbstractCounter {
         super.destroy();
     }
 
+    /**
+     * {@inheritDoc}
+     * 
+     * @since 0.4.2
+     */
+    @Override
+    public CassandraCounterFactory getCounterFactory() {
+        return (CassandraCounterFactory) super.getCounterFactory();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public CassandraCounter setCounterFactory(AbstractCounterFactory counterFactory) {
+        if (counterFactory instanceof CassandraCounterFactory) {
+            super.setCounterFactory(counterFactory);
+        } else {
+            throw new IllegalArgumentException("Argument must be an instance of "
+                    + CassandraCounterFactory.class.getName());
+        }
+        return this;
+    }
+
     /*----------------------------------------------------------------------*/
 
     protected static int[] toYYYYMM_DD(long timestampMs) {
@@ -122,6 +154,10 @@ public class CassandraCounter extends AbstractCounter {
         int[] yyyymm_dd = toYYYYMM_DD(timestampMs);
         CassandraUtils.executeNonSelect(session, pStmAdd, value, getName(), yyyymm_dd[0],
                 yyyymm_dd[1], key.longValue());
+        ICache cache = getCache();
+        if (cache != null) {
+            cache.delete(String.valueOf(yyyymm_dd[0] * 100 + yyyymm_dd[1]));
+        }
     }
 
     /**
@@ -137,10 +173,54 @@ public class CassandraCounter extends AbstractCounter {
         int[] yyyymm_dd = toYYYYMM_DD(timestampMs);
         CassandraUtils.executeNonSelect(session, pStmSet, value, getName(), yyyymm_dd[0],
                 yyyymm_dd[1], key.longValue());
+        ICache cache = getCache();
+        if (cache != null) {
+            cache.delete(String.valueOf(yyyymm_dd[0] * 100 + yyyymm_dd[1]));
+        }
     }
 
     /**
-     * Gets all data points of a day (used by cache loader).
+     * {@inheritDoc}
+     */
+    @Override
+    public DataPoint get(long timestampMs) {
+        Long _key = toTimeSeriesPoint(timestampMs);
+        Map<Long, DataPoint> row = _getRowWithCache(timestampMs);
+        DataPoint result = row != null ? row.get(_key) : null;
+        return result != null ? result : new DataPoint(Type.NONE, _key.longValue(), 0,
+                RESOLUTION_MS);
+    }
+
+    private ICache getCache() {
+        return cacheFactory != null ? cacheFactory.createCache(getName()) : null;
+    }
+
+    /**
+     * Gets all data points of a day specified by the timestamp, cache
+     * supported.
+     * 
+     * @param timestampMs
+     * @return
+     */
+    @SuppressWarnings("unchecked")
+    private Map<Long, DataPoint> _getRowWithCache(long timestampMs) {
+        int[] yyyymm_dd = toYYYYMM_DD(timestampMs);
+        int yyyymmdd = yyyymm_dd[0] * 100 + yyyymm_dd[1];
+        ICache cache = getCache();
+        String cacheKey = String.valueOf(yyyymmdd);
+        Object temp = cache != null ? cache.get(cacheKey) : null;
+        Map<Long, DataPoint> result = (Map<Long, DataPoint>) (temp instanceof Map ? temp : null);
+        if (result == null) {
+            result = _getRow(getName(), yyyymm_dd[0], yyyymm_dd[1]);
+            if (cache != null) {
+                cache.set(cacheKey, result);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Gets all data points of a day.
      * 
      * @param counterName
      * @param yyyymm
@@ -160,100 +240,6 @@ public class CassandraCounter extends AbstractCounter {
             result.put(key, dp);
         }
 
-        return result;
-    }
-
-    private ThreadLocal<LoadingCache<Integer, Map<Long, DataPoint>>> cacheRow = new ThreadLocal<LoadingCache<Integer, Map<Long, DataPoint>>>() {
-        @Override
-        protected LoadingCache<Integer, Map<Long, DataPoint>> initialValue() {
-            CacheLoader<Integer, Map<Long, DataPoint>> loaderRow = new CacheLoader<Integer, Map<Long, DataPoint>>() {
-                @Override
-                public Map<Long, DataPoint> load(Integer yyyymmdd) throws Exception {
-                    int yyyymm = yyyymmdd / 100;
-                    int dd = yyyymmdd % 100;
-                    return _getRow(getName(), yyyymm, dd);
-                }
-            };
-            return CacheBuilder.newBuilder().expireAfterAccess(60, TimeUnit.SECONDS)
-                    .build(loaderRow);
-        }
-    };
-
-    /**
-     * Gets all data points of a day specified by the timestamp, cache
-     * supported.
-     * 
-     * @param timestampMs
-     * @return
-     */
-    private Map<Long, DataPoint> _getRowWithCache(long timestampMs) {
-        int[] yyyymm_dd = toYYYYMM_DD(timestampMs);
-        int yyyymmdd = yyyymm_dd[0] * 100 + yyyymm_dd[1];
-        try {
-            return cacheRow.get().get(yyyymmdd);
-        } catch (ExecutionException e) {
-            return null;
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected DataPoint[] getAllInRange(long timestampStartMs, long timestampEndMs) {
-        try {
-            // initialize cache
-            Calendar cal = Calendar.getInstance();
-            cal.setTimeInMillis(timestampStartMs);
-            cal.set(Calendar.HOUR_OF_DAY, 0);
-            cal.set(Calendar.MINUTE, 0);
-            cal.set(Calendar.SECOND, 0);
-            cal.set(Calendar.MILLISECOND, 0);
-            while (cal.getTimeInMillis() <= timestampEndMs) {
-                int yyyy = cal.get(Calendar.YEAR);
-                int mm = cal.get(Calendar.MONTH) + 1;
-                int dd = cal.get(Calendar.DATE);
-                int yyyymmdd = yyyy * 10000 + mm * 100 + dd;
-                try {
-                    cacheRow.get().get(yyyymmdd);
-                } catch (ExecutionException e) {
-                }
-                cal.add(Calendar.DATE, 1);
-            }
-            return super.getAllInRange(timestampStartMs, timestampEndMs);
-        } finally {
-            cacheRow.remove();
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public DataPoint get(long timestampMs) {
-        Long _key = toTimeSeriesPoint(timestampMs);
-        Map<Long, DataPoint> row = _getRowWithCache(timestampMs);
-        DataPoint result = row != null ? row.get(_key) : null;
-        return result != null ? result : new DataPoint(Type.NONE, _key.longValue(), 0,
-                RESOLUTION_MS);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public DataPoint get(long timestampMs, DataPoint.Type type, int steps) {
-        int blockSize = steps * RESOLUTION_MS;
-        Long key = toTimeSeriesPoint(timestampMs, steps);
-        DataPoint result = new DataPoint().type(type).blockSize(blockSize)
-                .timestamp(key.longValue());
-
-        long _key = key.longValue();
-        for (int i = 0; i < steps; i++) {
-            DataPoint _temp = get(_key);
-            result.add(_temp);
-            _key += RESOLUTION_MS;
-        }
         return result;
     }
 }

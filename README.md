@@ -18,7 +18,7 @@ Third party libraries are distributed under their own licenses.
 
 ## Modules #
 
-ddth-tsc modules are released via Maven. Latest release version: `0.4.1.1`. See [RELEASE-NOTES.md](RELEASE-NOTES.md).
+ddth-tsc modules are released via Maven. Latest release version: `0.4.2`. See [RELEASE-NOTES.md](RELEASE-NOTES.md).
 
 Maven dependency:
 
@@ -26,7 +26,7 @@ Maven dependency:
 <dependency>
 	<groupId>com.github.ddth</groupId>
 	<artifactId>ddth-tsc-<module></artifactId>
-	<version>0.4.1.1</version>
+	<version>0.4.2</version>
 </dependency>
 ```
 
@@ -53,7 +53,7 @@ ICounterFactory counterFactory = new CassandraCounterFactory()
     .setHost("localhost")
     .setPort(9042)
     .setKeyspace("mykeyspace")
-    .setTableTemplate("counter_tablename_template")
+    .setTableMetadata("metadata_tablename")
     .init();
     
 //Redis counter factory

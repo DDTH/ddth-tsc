@@ -10,6 +10,7 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import com.github.ddth.redis.IRedisClient;
 import com.github.ddth.tsc.AbstractCounter;
+import com.github.ddth.tsc.AbstractCounterFactory;
 import com.github.ddth.tsc.DataPoint;
 import com.github.ddth.tsc.DataPoint.Type;
 import com.google.common.primitives.Longs;
@@ -22,26 +23,15 @@ import com.google.common.primitives.Longs;
  */
 public class RedisCounter extends AbstractCounter {
 
-    private RedisCounterFactory counterFactory;
     private int ttlSeconds = RedisCounterFactory.DEFAULT_TTL_SECONDS;
     private long BUCKET_SIZE = 60;
 
     public RedisCounter() {
     }
 
-    public RedisCounter(String name, RedisCounterFactory counterFactory, int ttlSeconds) {
+    public RedisCounter(String name, int ttlSeconds) {
         super(name);
-        setCounterFactory(counterFactory);
         setTTL(ttlSeconds);
-    }
-
-    public RedisCounterFactory getCounterFactory() {
-        return counterFactory;
-    }
-
-    public RedisCounter setCounterFactory(RedisCounterFactory counterFactory) {
-        this.counterFactory = counterFactory;
-        return this;
     }
 
     public int getTTL() {
@@ -69,6 +59,28 @@ public class RedisCounter extends AbstractCounter {
         super.destroy();
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public RedisCounterFactory getCounterFactory() {
+        return (RedisCounterFactory) super.getCounterFactory();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public RedisCounter setCounterFactory(AbstractCounterFactory counterFactory) {
+        if (counterFactory instanceof RedisCounterFactory) {
+            super.setCounterFactory(counterFactory);
+        } else {
+            throw new IllegalArgumentException("Argument must be an instance of "
+                    + RedisCounterFactory.class.getName());
+        }
+        return this;
+    }
+
     /*----------------------------------------------------------------------*/
 
     private long[] calcBucketOffset(long timestampMs) {
@@ -86,7 +98,7 @@ public class RedisCounter extends AbstractCounter {
         long[] bucket = calcBucketOffset(timestampMs);
         String redisKey = getName() + ":" + bucket[0];
         String redisField = String.valueOf(bucket[1]);
-        IRedisClient redisClient = counterFactory.getRedisClient();
+        IRedisClient redisClient = getCounterFactory().getRedisClient();
         try {
             redisClient.hashIncBy(redisKey, redisField, value);
             redisClient.expire(redisKey, ttlSeconds);
@@ -103,7 +115,7 @@ public class RedisCounter extends AbstractCounter {
         long[] bucket = calcBucketOffset(timestampMs);
         String redisKey = getName() + ":" + bucket[0];
         String redisField = String.valueOf(bucket[1]);
-        IRedisClient redisClient = counterFactory.getRedisClient();
+        IRedisClient redisClient = getCounterFactory().getRedisClient();
         try {
             redisClient.hashSet(redisKey, redisField, String.valueOf(value), ttlSeconds);
         } finally {
@@ -148,7 +160,7 @@ public class RedisCounter extends AbstractCounter {
         }
 
         // use pipeline to get all datapoint values at once
-        IRedisClient redisClient = counterFactory.getRedisClient();
+        IRedisClient redisClient = getCounterFactory().getRedisClient();
         List<String> _pointValues;
         try {
             _pointValues = redisClient.hashMultiGet(
@@ -171,7 +183,7 @@ public class RedisCounter extends AbstractCounter {
                     0, RESOLUTION_MS);
             result.add(dp);
         }
-        return result.toArray(DataPoint.EMPTY_COUNTER_BLOCK_ARR);
+        return result.toArray(DataPoint.EMPTY_ARR);
     }
 
     /**
@@ -182,7 +194,7 @@ public class RedisCounter extends AbstractCounter {
         long[] bucket = calcBucketOffset(timestampMs);
         String redisKey = getName() + ":" + bucket[0];
         String redisField = String.valueOf(bucket[1]);
-        IRedisClient redisClient = counterFactory.getRedisClient();
+        IRedisClient redisClient = getCounterFactory().getRedisClient();
         try {
             Long result = null;
             try {
@@ -196,24 +208,5 @@ public class RedisCounter extends AbstractCounter {
         } finally {
             redisClient.close();
         }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public DataPoint get(long timestampMs, DataPoint.Type type, int steps) {
-        int blockSize = steps * RESOLUTION_MS;
-        Long key = toTimeSeriesPoint(timestampMs, steps);
-        DataPoint result = new DataPoint().type(type).blockSize(blockSize)
-                .timestamp(key.longValue());
-
-        long _key = key.longValue();
-        for (int i = 0; i < steps; i++) {
-            DataPoint _temp = get(_key);
-            result.add(_temp);
-            _key += RESOLUTION_MS;
-        }
-        return result;
     }
 }

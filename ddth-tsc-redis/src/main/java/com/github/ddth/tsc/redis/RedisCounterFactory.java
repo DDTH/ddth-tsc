@@ -17,8 +17,6 @@ import com.github.ddth.tsc.ICounter;
  */
 public class RedisCounterFactory extends AbstractCounterFactory {
 
-    // private final static String[] EMPTY_STRING_ARR = new String[0];
-
     public final static int DEFAULT_TTL_SECONDS = 24 * 3600; // 1 day
 
     private final Logger LOGGER = LoggerFactory.getLogger(RedisCounterFactory.class);
@@ -142,8 +140,8 @@ public class RedisCounterFactory extends AbstractCounterFactory {
      */
     @Override
     protected ICounter createCounter(String name) {
-        RedisCounter counter = new RedisCounter(name, this, ttlSeconds);
-        counter.init();
+        RedisCounter counter = new RedisCounter(name, ttlSeconds);
+        counter.setCounterFactory(this).init();
         return counter;
     }
 }

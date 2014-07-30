@@ -23,7 +23,6 @@
 	</repositories>
 
 	<properties>
-		<version.ddth-tsc>0.4.0.3</version.ddth-tsc>
 		<version.ddth-commons>0.2.1.1</version.ddth-commons>
 		<version.ddth-redis>0.3.1</version.ddth-redis>
 	</properties>
@@ -57,7 +56,7 @@
 		<dependency>
 			<groupId>com.github.ddth</groupId>
 			<artifactId>ddth-tsc</artifactId>
-			<version>${version.ddth-tsc}</version>
+			<version>0.4.2-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.ddth</groupId>

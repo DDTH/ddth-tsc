@@ -1,6 +1,11 @@
 ddth-tsc-cassandra release notes
 ================================
 
+0.4.2 - 2014-07-30
+------------------
+- General bug fix & peformance improvement.
+
+
 0.4.0.4 - 2014-04-18
 --------------------
 - Bug fix: zero/empty data point behavior.

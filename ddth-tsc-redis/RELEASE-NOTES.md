@@ -1,6 +1,11 @@
 ddth-tsc-redis release notes
 ============================
 
+0.4.2 - 2014-07-30
+------------------
+- General bug fix & peformance improvement.
+
+
 0.4.1 - 2014-07-30
 ------------------
 - Use Redis pipeline operations to improve performance.

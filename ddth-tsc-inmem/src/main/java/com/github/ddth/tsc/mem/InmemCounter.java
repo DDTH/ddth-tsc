@@ -3,6 +3,7 @@ package com.github.ddth.tsc.mem;
 import java.util.Arrays;
 
 import com.github.ddth.tsc.AbstractCounter;
+import com.github.ddth.tsc.AbstractCounterFactory;
 import com.github.ddth.tsc.DataPoint;
 import com.github.ddth.tsc.DataPoint.Type;
 import com.google.common.util.concurrent.AtomicLongMap;
@@ -43,6 +44,32 @@ public class InmemCounter extends AbstractCounter {
     public void init() {
         super.init();
         BUFFER_NUM_BLOCKS = Math.max(DEFAULT_MAX_NUM_BLOCKS / 10, DEFAULT_BUFFER_NUM_BLOCKS);
+    }
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @since 0.4.2
+     */
+    @Override
+    public InmemCounterFactory getCounterFactory() {
+        return (InmemCounterFactory) super.getCounterFactory();
+    }
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @since 0.4.2
+     */
+    @Override
+    public InmemCounter setCounterFactory(AbstractCounterFactory counterFactory) {
+        if (counterFactory instanceof InmemCounterFactory) {
+            super.setCounterFactory(counterFactory);
+        } else {
+            throw new IllegalArgumentException("Argument must be an instance of "
+                    + InmemCounterFactory.class.getName());
+        }
+        return this;
     }
 
     /*----------------------------------------------------------------------*/

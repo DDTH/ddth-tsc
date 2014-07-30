@@ -9,6 +9,9 @@ import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
+import com.github.ddth.cacheadapter.AbstractCacheFactory;
+import com.github.ddth.cacheadapter.ICacheFactory;
+import com.github.ddth.cacheadapter.guava.GuavaCacheFactory;
 import com.github.ddth.tsc.AbstractCounterFactory;
 import com.github.ddth.tsc.ICounter;
 import com.github.ddth.tsc.cassandra.internal.CounterMetadata;
@@ -32,6 +35,7 @@ public class CassandraCounterFactory extends AbstractCounterFactory {
     private boolean myOwnCluster = false;
     private Cluster cluster;
     private Session session;
+    private ICacheFactory cacheFactory;
 
     private MetadataManager metadataManager;
 
@@ -133,6 +137,8 @@ public class CassandraCounterFactory extends AbstractCounterFactory {
         metadataManager.setCluster(cluster).setKeyspace(keyspace).setTableMetadata(tableMetadata);
         metadataManager.init();
 
+        initCache();
+
         return (CassandraCounterFactory) super.init();
     }
 
@@ -141,12 +147,6 @@ public class CassandraCounterFactory extends AbstractCounterFactory {
      */
     @Override
     public void destroy() {
-        try {
-            super.destroy();
-        } catch (Exception e) {
-            LOGGER.warn(e.getMessage(), e);
-        }
-
         if (metadataManager != null) {
             try {
                 metadataManager.destroy();
@@ -175,6 +175,35 @@ public class CassandraCounterFactory extends AbstractCounterFactory {
             } finally {
                 cluster = null;
             }
+        }
+
+        try {
+            destroyCache();
+        } catch (Exception e) {
+            LOGGER.warn(e.getMessage(), e);
+        }
+
+        try {
+            super.destroy();
+        } catch (Exception e) {
+            LOGGER.warn(e.getMessage(), e);
+        }
+    }
+
+    /**
+     * @since 0.4.2
+     */
+    protected void initCache() {
+        cacheFactory = new GuavaCacheFactory().setDefaultCacheCapacity(10000)
+                .setDefaultExpireAfterAccess(3600).init();
+    }
+
+    /**
+     * @since 0.4.2
+     */
+    protected void destroyCache() {
+        if (cacheFactory != null) {
+            ((AbstractCacheFactory) cacheFactory).destroy();
         }
     }
 
@@ -210,9 +239,8 @@ public class CassandraCounterFactory extends AbstractCounterFactory {
         }
 
         CassandraCounter counter = new CassandraCounter();
-        counter.setName(name);
-        counter.setSession(getSession());
-        counter.setMetadata(metadata);
+        counter.setName(name).setCounterFactory(this);
+        counter.setSession(getSession()).setMetadata(metadata).setCacheFactory(cacheFactory);
         counter.init();
         return counter;
     }

@@ -28,7 +28,7 @@ public abstract class AbstractCounterFactory implements ICounterFactory {
 	public AbstractCounterFactory init() {
 		int numProcessors = Runtime.getRuntime().availableProcessors();
 		counterCache = CacheBuilder.newBuilder()
-				.concurrencyLevel(numProcessors)
+				.concurrencyLevel(numProcessors * 2)
 				.expireAfterAccess(24, TimeUnit.HOURS)
 				.removalListener(new RemovalListener<String, ICounter>() {
 					@Override

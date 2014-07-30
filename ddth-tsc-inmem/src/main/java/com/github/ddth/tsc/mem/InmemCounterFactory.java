@@ -16,7 +16,9 @@ public class InmemCounterFactory extends AbstractCounterFactory {
      */
     @Override
     protected ICounter createCounter(String name) {
-        return new InmemCounter(name);
+        InmemCounter counter = new InmemCounter(name);
+        counter.setCounterFactory(this).init();
+        return counter;
     }
 
 }
