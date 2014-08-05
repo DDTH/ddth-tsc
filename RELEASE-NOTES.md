@@ -1,10 +1,19 @@
-ddth-tsc release notes
-======================
+ddth-tsc project release notes
+==============================
+
+0.5.0 - 2014-08-06
+------------------
+- Major algorithm changes:
+  - `AbstractCounter.getSeries(...)`: `timestampStartMs` and `timestampEndMs` are no-longer rounded, caller is responsible for providing correct timestamp-range.
+  - `AbstractCounter.getLastN(...)`: update rounding formula to cope with change(s) in method `getSeries(...)`.
+- `CassandraCounter`:
+  - (Experimental) support `set` operator for counter columns.
+  - (Experimental) support `add` operator for bigint columns.
+
 
 0.4.2 - 2014-07-30
 ------------------
 - General bug fix & peformance improvement.
-
 
 
 0.4.1.1 - 2014-07-30

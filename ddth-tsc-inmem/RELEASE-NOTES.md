@@ -1,5 +1,12 @@
-ddth-tsc-cassandra release notes
-================================
+ddth-tsc release notes
+======================
+
+0.5.0 - 2014-08-06
+------------------
+- Major algorithm changes:
+  - `AbstractCounter.getSeries(...)`: `timestampStartMs` and `timestampEndMs` are no-longer rounded, caller is responsible for providing correct timestamp-range.
+  - `AbstractCounter.getLastN(...)`: update rounding formula to cope with change(s) in method `getSeries(...)`.
+
 
 0.4.2 - 2014-07-30
 ------------------

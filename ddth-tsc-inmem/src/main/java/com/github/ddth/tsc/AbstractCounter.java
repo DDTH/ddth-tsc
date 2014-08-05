@@ -1,5 +1,6 @@
 package com.github.ddth.tsc;
 
+import java.util.Calendar;
 import java.util.Comparator;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -264,8 +265,9 @@ public abstract class AbstractCounter implements ICounter {
             DataPoint block = result[resultIndex];
             if (block == null) {
                 long t = org.timestamp();
-                long delta = t % blockSize;
-                t -= delta;
+                /* as of 0.5.0, the two following lines are commented out! */
+                // long delta = t % blockSize;
+                // t -= delta;
                 block = new DataPoint(DataPoint.Type.NONE, t, 0, blockSize);
                 result[resultIndex] = block;
             }
@@ -315,10 +317,25 @@ public abstract class AbstractCounter implements ICounter {
         if (n < 1) {
             n = 1;
         }
-        long currentTimestamp = System.currentTimeMillis();
-        int blockSize = RESOLUTION_MS * steps;
-        long delta = currentTimestamp % blockSize;
-        long timestampStart = currentTimestamp - delta - (n - 1) * blockSize;
+        Calendar now = Calendar.getInstance();
+        long currentTimestamp = now.getTimeInMillis();
+        now.add(Calendar.SECOND, -(n - 1) * steps);
+        now.set(Calendar.MILLISECOND, 0);
+        if (steps >= 60) {
+            now.set(Calendar.SECOND, 0);
+        }
+        if (steps >= 60 * 60) {
+            now.set(Calendar.MINUTE, 0);
+        }
+        if (steps >= 24 * 60 * 60) {
+            now.set(Calendar.HOUR_OF_DAY, 0);
+        }
+        long timestampStart = now.getTimeInMillis();
         return getSeries(timestampStart, currentTimestamp + 1, steps, type);
+        /* as of 0.5.0: timestampStart is no longer rounded */
+        // int blockSize = RESOLUTION_MS * steps;
+        // long delta = currentTimestamp % blockSize;
+        // long timestampStart = currentTimestamp - delta - (n - 1) * blockSize;
+        // return getSeries(timestampStart, currentTimestamp + 1, steps, type);
     }
 }

@@ -146,14 +146,19 @@ public class CassandraCounter extends AbstractCounter {
      */
     @Override
     public void add(long timestampMs, long value) {
-        if (!metadata.isCounterColumn) {
-            throw new IllegalStateException("Counter [" + getName()
-                    + "] does not support ADD operator!");
-        }
         Long key = toTimeSeriesPoint(timestampMs);
         int[] yyyymm_dd = toYYYYMM_DD(timestampMs);
-        CassandraUtils.executeNonSelect(session, pStmAdd, value, getName(), yyyymm_dd[0],
-                yyyymm_dd[1], key.longValue());
+
+        if (!metadata.isCounterColumn) {
+            Row row = CassandraUtils.executeOne(session, pStmGet, getName(), yyyymm_dd[0],
+                    yyyymm_dd[1], key.longValue());
+            long currentValue = row != null ? row.getLong("v") : 0;
+            long newValue = value + currentValue;
+            set(timestampMs, newValue);
+        } else {
+            CassandraUtils.executeNonSelect(session, pStmAdd, value, getName(), yyyymm_dd[0],
+                    yyyymm_dd[1], key.longValue());
+        }
         ICache cache = getCache();
         if (cache != null) {
             cache.delete(String.valueOf(yyyymm_dd[0] * 100 + yyyymm_dd[1]));
@@ -165,14 +170,19 @@ public class CassandraCounter extends AbstractCounter {
      */
     @Override
     public void set(long timestampMs, long value) {
-        if (metadata.isCounterColumn) {
-            throw new IllegalStateException("Counter [" + getName()
-                    + "] does not support SET operator!");
-        }
         Long key = toTimeSeriesPoint(timestampMs);
         int[] yyyymm_dd = toYYYYMM_DD(timestampMs);
-        CassandraUtils.executeNonSelect(session, pStmSet, value, getName(), yyyymm_dd[0],
-                yyyymm_dd[1], key.longValue());
+
+        if (metadata.isCounterColumn) {
+            Row row = CassandraUtils.executeOne(session, pStmGet, getName(), yyyymm_dd[0],
+                    yyyymm_dd[1], key.longValue());
+            long currentValue = row != null ? row.getLong("v") : 0;
+            long delta = value - currentValue;
+            add(timestampMs, delta);
+        } else {
+            CassandraUtils.executeNonSelect(session, pStmSet, value, getName(), yyyymm_dd[0],
+                    yyyymm_dd[1], key.longValue());
+        }
         ICache cache = getCache();
         if (cache != null) {
             cache.delete(String.valueOf(yyyymm_dd[0] * 100 + yyyymm_dd[1]));
