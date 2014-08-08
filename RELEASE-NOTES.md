@@ -1,6 +1,11 @@
 ddth-tsc project release notes
 ==============================
 
+0.5.1 - 2014-08-06
+------------------
+- `CassandraCounterFactory`: cache can be enabled/disabled.
+
+
 0.5.0 - 2014-08-06
 ------------------
 - Major algorithm changes:

@@ -12,6 +12,7 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.github.ddth.cacheadapter.ICache;
 import com.github.ddth.cacheadapter.ICacheFactory;
+import com.github.ddth.cacheadapter.guava.GuavaCacheFactory;
 import com.github.ddth.tsc.AbstractCounter;
 import com.github.ddth.tsc.AbstractCounterFactory;
 import com.github.ddth.tsc.DataPoint;
@@ -201,8 +202,36 @@ public class CassandraCounter extends AbstractCounter {
                 RESOLUTION_MS);
     }
 
+    /**
+     * @since 0.5.1
+     */
+    protected ThreadLocal<ICacheFactory> threadLocalCache = new ThreadLocal<ICacheFactory>() {
+        @Override
+        protected ICacheFactory initialValue() {
+            return new GuavaCacheFactory().setDefaultCacheCapacity(10000)
+                    .setDefaultExpireAfterAccess(5 * 60).init();
+        }
+    };
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @since 0.5.1
+     */
+    protected DataPoint[] getAllInRange(long timestampStartMs, long timestampEndMs) {
+        try {
+            return super.getAllInRange(timestampStartMs, timestampEndMs);
+        } finally {
+            threadLocalCache.remove();
+        }
+    }
+
+    /**
+     * @since 0.4.2
+     */
     private ICache getCache() {
-        return cacheFactory != null ? cacheFactory.createCache(getName()) : null;
+        return cacheFactory != null ? cacheFactory.createCache(getName()) : threadLocalCache.get()
+                .createCache(getName());
     }
 
     /**

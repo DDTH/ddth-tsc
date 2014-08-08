@@ -1,6 +1,11 @@
 ddth-tsc-cassandra release notes
 ================================
 
+0.5.1 - 2014-08-08
+------------------
+- Cache can be enabled/disabled.
+
+
 0.5.0 - 2014-08-04
 ------------------
 - (Experimental) support `set` operator for counter columns.

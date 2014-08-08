@@ -36,6 +36,7 @@ public class CassandraCounterFactory extends AbstractCounterFactory {
     private Cluster cluster;
     private Session session;
     private ICacheFactory cacheFactory;
+    private boolean cacheEnabled = true;
 
     private MetadataManager metadataManager;
 
@@ -191,11 +192,45 @@ public class CassandraCounterFactory extends AbstractCounterFactory {
     }
 
     /**
+     * Enables/Disables cache.
+     * 
+     * @param cacheEnabled
+     * @return
+     * @since 0.5.1
+     */
+    public CassandraCounterFactory setCacheEnabled(boolean cacheEnabled) {
+        this.cacheEnabled = cacheEnabled;
+        return this;
+    }
+
+    /**
+     * Is cache enabled?
+     * 
+     * @return
+     * @since 0.5.1
+     */
+    public boolean getCacheEnabled() {
+        return cacheEnabled;
+    }
+
+    /**
+     * Is cache enabled?
+     * 
+     * @return
+     * @since 0.5.1
+     */
+    public boolean isCacheEnabled() {
+        return cacheEnabled;
+    }
+
+    /**
      * @since 0.4.2
      */
     protected void initCache() {
-        cacheFactory = new GuavaCacheFactory().setDefaultCacheCapacity(10000)
-                .setDefaultExpireAfterAccess(3600).init();
+        if (cacheEnabled) {
+            cacheFactory = new GuavaCacheFactory().setDefaultCacheCapacity(10000)
+                    .setDefaultExpireAfterAccess(3600).init();
+        }
     }
 
     /**
@@ -240,7 +275,8 @@ public class CassandraCounterFactory extends AbstractCounterFactory {
 
         CassandraCounter counter = new CassandraCounter();
         counter.setName(name).setCounterFactory(this);
-        counter.setSession(getSession()).setMetadata(metadata).setCacheFactory(cacheFactory);
+        counter.setSession(getSession()).setMetadata(metadata)
+                .setCacheFactory(cacheEnabled ? cacheFactory : null);
         counter.init();
         return counter;
     }
