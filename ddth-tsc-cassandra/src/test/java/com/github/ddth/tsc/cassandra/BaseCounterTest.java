@@ -5,8 +5,8 @@ import junit.framework.TestCase;
 import org.junit.After;
 import org.junit.Before;
 
-import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
+import com.github.ddth.cql.SessionManager;
 import com.github.ddth.tsc.cassandra.internal.EmbeddedCassandraServer;
 import com.github.ddth.tsc.mem.InmemCounter;
 
@@ -21,7 +21,7 @@ public abstract class BaseCounterTest extends TestCase {
     protected CassandraCounter counter1, counter2;
     protected CassandraCounterFactory counterFactory;
     protected EmbeddedCassandraServer embeddedCassandraServer;
-    protected Cluster cluster;
+    protected SessionManager sessionManager;
 
     private final static String CASSANDRA_HOST = "127.0.0.1";
     private final static int CASSANDRA_PORT = 9042;
@@ -36,9 +36,11 @@ public abstract class BaseCounterTest extends TestCase {
         embeddedCassandraServer = new EmbeddedCassandraServer();
         embeddedCassandraServer.start();
 
-        cluster = Cluster.builder().addContactPoint(CASSANDRA_HOST).withPort(CASSANDRA_PORT)
-                .build();
-        Session session = cluster.connect("system");
+        sessionManager = new SessionManager();
+        sessionManager.init();
+
+        Session session = sessionManager.getSession(CASSANDRA_HOST + ":" + CASSANDRA_PORT, null,
+                null, "system");
         session.execute("CREATE KEYSPACE "
                 + KEYSPACE
                 + " WITH replication={'class':'SimpleStrategy','replication_factor':'1'} AND durable_writes=true");
@@ -69,10 +71,12 @@ public abstract class BaseCounterTest extends TestCase {
                 + table2
                 + " (c varchar, ym int, d int, t bigint, v bigint, PRIMARY KEY ((c, ym, d), t) ) WITH COMPACT STORAGE");
 
-        session.close();
+        // session.close();
 
         counterFactory = new CassandraCounterFactory();
-        counterFactory.setCluster(cluster).setKeyspace(KEYSPACE);
+        counterFactory.setHostsAndPorts(CASSANDRA_HOST + ":" + CASSANDRA_PORT)
+                .setKeyspace(KEYSPACE).setSessionManager(sessionManager)
+                .setTableMetadata(CqlTemplate.TABLE_METADATA);
         counterFactory.init();
 
         counter1 = (CassandraCounter) counterFactory.getCounter("test_counter_1");
@@ -81,7 +85,6 @@ public abstract class BaseCounterTest extends TestCase {
 
     @After
     public void tearDown() throws Exception {
-
         if (counterFactory != null) {
             try {
                 counterFactory.destroy();
@@ -91,12 +94,12 @@ public abstract class BaseCounterTest extends TestCase {
             }
         }
 
-        if (cluster != null) {
+        if (sessionManager != null) {
             try {
-                cluster.close();
+                sessionManager.destroy();
             } catch (Exception e) {
             } finally {
-                cluster = null;
+                sessionManager = null;
             }
         }
 

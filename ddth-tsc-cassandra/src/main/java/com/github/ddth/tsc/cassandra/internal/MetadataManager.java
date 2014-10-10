@@ -1,21 +1,17 @@
 package com.github.ddth.tsc.cassandra.internal;
 
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.github.ddth.commons.utils.DPathUtils;
 import com.github.ddth.commons.utils.SerializationUtils;
+import com.github.ddth.cql.CqlUtils;
+import com.github.ddth.cql.SessionManager;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -31,67 +27,115 @@ public class MetadataManager {
     public final static String DEFAULT_METADATA_TABLE = "tsc_metadata";
     private final static String DEFAULT_METADATA_NAME = "*";
 
-    private final static String[] EMPTY_STRING_ARR = new String[0];
     private final static String CQL_GET_METADATA = "SELECT * FROM {0} WHERE c=?";
 
-    private final Logger LOGGER = LoggerFactory.getLogger(MetadataManager.class);
-
-    private List<String> hosts = new ArrayList<String>();
-    private String keyspace, tableMetadata = DEFAULT_METADATA_TABLE;
-    private int port = 9042;
-    private boolean myOwnCluster = false;
-    private Cluster cluster;
-    private Session session;
+    /*
+     * Cassandra hosts & ports, username and password See:
+     * https://github.com/DDTH/ddth-cql-utils
+     */
+    private String hostsAndPorts, username, password;
+    private String keyspace, tableMetadata = MetadataManager.DEFAULT_METADATA_TABLE;
+    private SessionManager sessionManager;
 
     private String cqlGetMetadata;
 
-    public MetadataManager addHost(String host) {
-        hosts.add(host);
+    /**
+     * Hosts & Ports to connect to Cassandra cluster.
+     * 
+     * @return
+     * @since 0.6.0
+     * @see https://github.com/DDTH/ddth-cql-utils
+     */
+    protected String getHostsAndPorts() {
+        return hostsAndPorts;
+    }
+
+    /**
+     * Hosts & Ports to connect to Cassandra cluster.
+     * 
+     * @param hostsAndPorts
+     * @return
+     * @since 0.6.0
+     * @see https://github.com/DDTH/ddth-cql-utils
+     */
+    public MetadataManager setHostsAndPorts(String hostsAndPorts) {
+        this.hostsAndPorts = hostsAndPorts;
         return this;
     }
 
-    public String getHost() {
-        return hosts.size() > 0 ? hosts.get(0) : null;
+    /**
+     * Username to connect to Cassandra cluster.
+     * 
+     * @return
+     * @since 0.6.0
+     * @see https://github.com/DDTH/ddth-cql-utils
+     */
+    protected String getUsername() {
+        return username;
     }
 
-    public MetadataManager setHost(String host) {
-        hosts.clear();
-        hosts.add(host);
+    /**
+     * Username to connect to Cassandra cluster.
+     * 
+     * @param username
+     * @return
+     * @since 0.6.0
+     * @see https://github.com/DDTH/ddth-cql-utils
+     */
+    public MetadataManager setUsername(String username) {
+        this.username = username;
         return this;
     }
 
-    public Collection<String> getHosts() {
-        return this.hosts;
+    /**
+     * Password to connect to Cassandra cluster.
+     * 
+     * @return
+     * @since 0.6.0
+     * @see https://github.com/DDTH/ddth-cql-utils
+     */
+    protected String getPassword() {
+        return password;
     }
 
-    public MetadataManager setHosts(Collection<String> hosts) {
-        this.hosts.clear();
-        if (hosts != null) {
-            this.hosts.addAll(hosts);
-        }
+    /**
+     * Password to connect to Cassandra cluster.
+     * 
+     * @param password
+     * @return
+     * @since 0.6.0
+     * @see https://github.com/DDTH/ddth-cql-utils
+     */
+    public MetadataManager setPassword(String password) {
+        this.password = password;
         return this;
     }
 
-    public MetadataManager setHosts(String[] hosts) {
-        this.hosts.clear();
-        if (hosts != null) {
-            for (String host : hosts) {
-                this.hosts.add(host);
-            }
-        }
+    /**
+     * Cassandra session manager.
+     * 
+     * @return
+     * @since 0.6.0
+     * @see https://github.com/DDTH/ddth-cql-utils
+     */
+    protected SessionManager getSessionManager() {
+        return sessionManager;
+    }
+
+    /**
+     * Cassandra session manager.
+     * 
+     * @param sessionManager
+     * @return
+     * @since 0.6.0
+     * @see https://github.com/DDTH/ddth-cql-utils
+     */
+    public MetadataManager setSessionManager(SessionManager sessionManager) {
+        this.sessionManager = sessionManager;
         return this;
     }
 
-    public int getPort() {
-        return port;
-    }
-
-    public MetadataManager setPort(int port) {
-        this.port = port;
-        return this;
-    }
-
-    public String getKeyspace() {
+    protected String getKeyspace() {
         return keyspace;
     }
 
@@ -111,26 +155,8 @@ public class MetadataManager {
         return this;
     }
 
-    public String getTableMetadata() {
+    protected String getTableMetadata() {
         return tableMetadata;
-    }
-
-    public MetadataManager setCluster(Cluster cluster) {
-        if (session != null) {
-            session.close();
-            session = null;
-        }
-        if (this.cluster != null && myOwnCluster) {
-            this.cluster.close();
-        }
-        this.cluster = cluster;
-        myOwnCluster = false;
-
-        return this;
-    }
-
-    public Cluster getCluster() {
-        return cluster;
     }
 
     public void init() {
@@ -142,46 +168,35 @@ public class MetadataManager {
                         return _read(key);
                     }
                 });
-
-        if (cluster == null) {
-            cluster = Cluster.builder().addContactPoints(hosts.toArray(EMPTY_STRING_ARR))
-                    .withPort(port).build();
-            myOwnCluster = true;
-        }
-        session = cluster.connect(keyspace);
-
         cqlGetMetadata = MessageFormat.format(CQL_GET_METADATA, tableMetadata);
     }
 
     public void destroy() {
-        if (session != null) {
-            try {
-                session.close();
-            } catch (Exception e) {
-                LOGGER.warn(e.getMessage(), e);
-            } finally {
-                session = null;
-            }
-        }
-
-        if (cluster != null && myOwnCluster) {
-            try {
-                cluster.close();
-            } catch (Exception e) {
-                LOGGER.warn(e.getMessage(), e);
-            } finally {
-                cluster = null;
-            }
-        }
-
         cache.invalidateAll();
     }
 
     /*----------------------------------------------------------------------*/
+
+    /**
+     * Obtains a Cassandra session.
+     * 
+     * @return
+     */
+    private Session getSession() {
+        return sessionManager.getSession(hostsAndPorts, username, password, keyspace);
+    }
+
     private LoadingCache<String, String> cache;
 
+    /**
+     * Reads a row data from storage (no cache).
+     * 
+     * @param rowKey
+     * @return
+     * @throws RowNotFoundException
+     */
     private String _read(String rowKey) throws RowNotFoundException {
-        Row row = CassandraUtils.executeOne(session, cqlGetMetadata, rowKey);
+        Row row = CqlUtils.executeOne(getSession(), cqlGetMetadata, rowKey);
         String jsonString = row != null ? row.getString("o") : null;
         if (jsonString != null) {
             return jsonString;
@@ -189,6 +204,12 @@ public class MetadataManager {
         throw new RowNotFoundException(rowKey);
     }
 
+    /**
+     * Reads a row data from storage (cache supported).
+     * 
+     * @param rowKey
+     * @return
+     */
     private String getRow(String rowKey) {
         try {
             return cache.get(rowKey);

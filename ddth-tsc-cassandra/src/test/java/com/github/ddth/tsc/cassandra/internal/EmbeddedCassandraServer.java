@@ -4,7 +4,6 @@ import java.io.File;
 
 import org.apache.cassandra.io.util.FileUtils;
 import org.apache.cassandra.service.CassandraDaemon;
-import org.apache.cassandra.service.StorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +25,8 @@ public class EmbeddedCassandraServer {
 
             FileUtils.createDirectory(baseDirectory);
 
-            System.setProperty("log4j.configuration", "file:target/test-classes/log4j.properties");
+            // System.setProperty("log4j.configuration",
+            // "file:target/test-classes/log4j.properties");
             System.setProperty("cassandra.config", "file:target/test-classes/cassandra.yaml");
 
             cassandraDaemon = new CassandraDaemon();
@@ -44,36 +44,37 @@ public class EmbeddedCassandraServer {
             cassandraThread.start();
         } catch (Exception e) {
             logger.error("Embedded casandra server start failed", e);
-
-            // cleanup
             stop();
         }
     }
 
     public void stop() throws Exception {
         if (cassandraThread != null) {
+            cassandraDaemon.nativeServer.stop();
+            cassandraDaemon.thriftServer.stop();
             cassandraDaemon.stop();
             cassandraDaemon.destroy();
+
             cassandraThread.interrupt();
             cassandraThread = null;
 
             // StorageService.optionalTasks.shutdownNow();
             // StorageService.scheduledTasks.shutdownNow();
             // StorageService.tasks.shutdownNow();
-            StorageService.instance.stopClient();
+            // StorageService.instance.stopClient();
             // StorageService.instance.stopGossiping();
             // StorageService.instance.stopNativeTransport();
             // StorageService.instance.stopRPCServer();
 
-            ThreadGroup tg = Thread.currentThread().getThreadGroup();
-            Thread[] threads = new Thread[tg.activeCount()];
-            tg.enumerate(threads);
-            for (Thread t : threads) {
-                if (t.getName().equals("COMMIT-LOG-ALLOCATOR")
-                        || t.getName().equals("COMMIT-LOG-WRITER")) {
-                    t.interrupt();
-                }
-            }
+            // ThreadGroup tg = Thread.currentThread().getThreadGroup();
+            // Thread[] threads = new Thread[tg.activeCount()];
+            // tg.enumerate(threads);
+            // for (Thread t : threads) {
+            // if (t.getName().equals("COMMIT-LOG-ALLOCATOR")
+            // || t.getName().equals("COMMIT-LOG-WRITER")) {
+            // t.interrupt();
+            // }
+            // }
         }
 
         cleanupDirectoriesFailover();

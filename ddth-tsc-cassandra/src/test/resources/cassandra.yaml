@@ -64,7 +64,6 @@ concurrent_writes: 2
 # commitlog_total_space_in_mb: 4096
 
 #memtable_flush_writers: 1
-memtable_flush_queue_size: 4
 
 trickle_fsync: false
 trickle_fsync_interval_in_kb: 10240
@@ -106,11 +105,8 @@ auto_snapshot: false
 
 column_index_size_in_kb: 64
 
-in_memory_compaction_limit_in_mb: 64
 #concurrent_compactors: 1
-multithreaded_compaction: false
 compaction_throughput_mb_per_sec: 16
-compaction_preheat_key_cache: true
 
 # stream_throughput_outbound_megabits_per_sec: 200
 

@@ -1,4 +1,4 @@
-package qnd;
+package qnd.tsc.cassandra;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
@@ -10,7 +10,7 @@ public class QndPerformanceTest {
 
     public static void main(String[] args) throws InterruptedException {
         final CassandraCounterFactory counterFactory = new CassandraCounterFactory()
-                .setHost("localhost").setPort(9042).setKeyspace("demo")
+                .setHostsAndPorts("localhost:9042").setKeyspace("demo")
                 .setTableMetadata("tsc_metadata").init();
         final ICounter counter1 = counterFactory.getCounter("counter_1");
         // counter1.add(1);

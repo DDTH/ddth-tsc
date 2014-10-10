@@ -6,18 +6,18 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.github.ddth.cacheadapter.ICache;
 import com.github.ddth.cacheadapter.ICacheFactory;
 import com.github.ddth.cacheadapter.guava.GuavaCacheFactory;
+import com.github.ddth.cql.CqlUtils;
+import com.github.ddth.cql.SessionManager;
 import com.github.ddth.tsc.AbstractCounter;
 import com.github.ddth.tsc.AbstractCounterFactory;
 import com.github.ddth.tsc.DataPoint;
 import com.github.ddth.tsc.DataPoint.Type;
-import com.github.ddth.tsc.cassandra.internal.CassandraUtils;
 import com.github.ddth.tsc.cassandra.internal.CounterMetadata;
 
 /**
@@ -28,25 +28,128 @@ import com.github.ddth.tsc.cassandra.internal.CounterMetadata;
  */
 public class CassandraCounter extends AbstractCounter {
 
-    private Session session;
-    private PreparedStatement pStmAdd, pStmSet, pStmGet, pStmGetRow;
-    private CounterMetadata metadata;
+    /*
+     * Cassandra hosts & ports, username and password See:
+     * https://github.com/DDTH/ddth-cql-utils
+     */
+    private String hostsAndPorts, username, password;
+    private String keyspace;
+    private SessionManager sessionManager;
     private ICacheFactory cacheFactory;
+    private CounterMetadata metadata;
+
+    private String cqlAdd, cqlSet, cqlGet, cqlGetRow;
 
     public CassandraCounter() {
     }
 
-    public CassandraCounter(String name, Session session, CounterMetadata metadata) {
+    public CassandraCounter(String name, CounterMetadata metadata) {
         super(name);
-        setSession(session).setMetadata(metadata);
+        setMetadata(metadata);
     }
 
-    protected Session getSession() {
-        return session;
+    /**
+     * Hosts & Ports to connect to Cassandra cluster.
+     * 
+     * @return
+     * @since 0.6.0
+     * @see https://github.com/DDTH/ddth-cql-utils
+     */
+    protected String getHostsAndPorts() {
+        return hostsAndPorts;
     }
 
-    public CassandraCounter setSession(Session session) {
-        this.session = session;
+    /**
+     * Hosts & Ports to connect to Cassandra cluster.
+     * 
+     * @param hostsAndPorts
+     * @return
+     * @since 0.6.0
+     * @see https://github.com/DDTH/ddth-cql-utils
+     */
+    public CassandraCounter setHostsAndPorts(String hostsAndPorts) {
+        this.hostsAndPorts = hostsAndPorts;
+        return this;
+    }
+
+    /**
+     * Username to connect to Cassandra cluster.
+     * 
+     * @return
+     * @since 0.6.0
+     * @see https://github.com/DDTH/ddth-cql-utils
+     */
+    protected String getUsername() {
+        return username;
+    }
+
+    /**
+     * Username to connect to Cassandra cluster.
+     * 
+     * @param username
+     * @return
+     * @since 0.6.0
+     * @see https://github.com/DDTH/ddth-cql-utils
+     */
+    public CassandraCounter setUsername(String username) {
+        this.username = username;
+        return this;
+    }
+
+    /**
+     * Password to connect to Cassandra cluster.
+     * 
+     * @return
+     * @since 0.6.0
+     * @see https://github.com/DDTH/ddth-cql-utils
+     */
+    protected String getPassword() {
+        return password;
+    }
+
+    /**
+     * Password to connect to Cassandra cluster.
+     * 
+     * @param password
+     * @return
+     * @since 0.6.0
+     * @see https://github.com/DDTH/ddth-cql-utils
+     */
+    public CassandraCounter setPassword(String password) {
+        this.password = password;
+        return this;
+    }
+
+    /**
+     * Cassandra session manager.
+     * 
+     * @return
+     * @since 0.6.0
+     * @see https://github.com/DDTH/ddth-cql-utils
+     */
+    protected SessionManager getSessionManager() {
+        return sessionManager;
+    }
+
+    /**
+     * Cassandra session manager.
+     * 
+     * @param sessionManager
+     * @return
+     * @since 0.6.0
+     * @see https://github.com/DDTH/ddth-cql-utils
+     */
+    public CassandraCounter setSessionManager(SessionManager sessionManager) {
+        this.sessionManager = sessionManager;
+        return this;
+    }
+
+    protected String getKeyspace() {
+        return keyspace;
+    }
+
+    public CassandraCounter setKeyspace(String keyspace) {
+        this.keyspace = keyspace;
         return this;
     }
 
@@ -68,23 +171,17 @@ public class CassandraCounter extends AbstractCounter {
         return cacheFactory;
     }
 
-    private void _initPreparedStatements() {
+    protected Session getSession() {
+        return sessionManager.getSession(hostsAndPorts, username, password, keyspace);
+    }
+
+    private void _initStatements() {
         String tableName = metadata.table;
 
-        if (metadata.isCounterColumn) {
-            String cqlAdd = MessageFormat.format(CqlTemplate.CQL_TEMPLATE_ADD_COUNTER, tableName);
-            pStmAdd = session.prepare(cqlAdd);
-        } else {
-            String cqlSet = MessageFormat.format(CqlTemplate.CQL_TEMPLATE_SET_COUNTER, tableName);
-            pStmSet = session.prepare(cqlSet);
-        }
-
-        String cqlGet = MessageFormat.format(CqlTemplate.CQL_TEMPLATE_GET_COUNTER, tableName);
-        pStmGet = session.prepare(cqlGet);
-
-        String cqlGetRow = MessageFormat
-                .format(CqlTemplate.CQL_TEMPLATE_GET_COUNTER_ROW, tableName);
-        pStmGetRow = session.prepare(cqlGetRow);
+        cqlAdd = MessageFormat.format(CqlTemplate.CQL_TEMPLATE_ADD_COUNTER, tableName);
+        cqlSet = MessageFormat.format(CqlTemplate.CQL_TEMPLATE_SET_COUNTER, tableName);
+        cqlGet = MessageFormat.format(CqlTemplate.CQL_TEMPLATE_GET_COUNTER, tableName);
+        cqlGetRow = MessageFormat.format(CqlTemplate.CQL_TEMPLATE_GET_COUNTER_ROW, tableName);
     }
 
     /**
@@ -94,7 +191,7 @@ public class CassandraCounter extends AbstractCounter {
     public void init() {
         super.init();
 
-        _initPreparedStatements();
+        _initStatements();
     }
 
     /**
@@ -151,13 +248,13 @@ public class CassandraCounter extends AbstractCounter {
         int[] yyyymm_dd = toYYYYMM_DD(timestampMs);
 
         if (!metadata.isCounterColumn) {
-            Row row = CassandraUtils.executeOne(session, pStmGet, getName(), yyyymm_dd[0],
+            Row row = CqlUtils.executeOne(getSession(), cqlGet, getName(), yyyymm_dd[0],
                     yyyymm_dd[1], key.longValue());
             long currentValue = row != null ? row.getLong("v") : 0;
             long newValue = value + currentValue;
             set(timestampMs, newValue);
         } else {
-            CassandraUtils.executeNonSelect(session, pStmAdd, value, getName(), yyyymm_dd[0],
+            CqlUtils.executeNonSelect(getSession(), cqlAdd, value, getName(), yyyymm_dd[0],
                     yyyymm_dd[1], key.longValue());
         }
         ICache cache = getCache();
@@ -175,13 +272,13 @@ public class CassandraCounter extends AbstractCounter {
         int[] yyyymm_dd = toYYYYMM_DD(timestampMs);
 
         if (metadata.isCounterColumn) {
-            Row row = CassandraUtils.executeOne(session, pStmGet, getName(), yyyymm_dd[0],
+            Row row = CqlUtils.executeOne(getSession(), cqlGet, getName(), yyyymm_dd[0],
                     yyyymm_dd[1], key.longValue());
             long currentValue = row != null ? row.getLong("v") : 0;
             long delta = value - currentValue;
             add(timestampMs, delta);
         } else {
-            CassandraUtils.executeNonSelect(session, pStmSet, value, getName(), yyyymm_dd[0],
+            CqlUtils.executeNonSelect(getSession(), cqlSet, value, getName(), yyyymm_dd[0],
                     yyyymm_dd[1], key.longValue());
         }
         ICache cache = getCache();
@@ -270,7 +367,7 @@ public class CassandraCounter extends AbstractCounter {
     private Map<Long, DataPoint> _getRow(String counterName, int yyyymm, int dd) {
         Map<Long, DataPoint> result = new HashMap<Long, DataPoint>();
 
-        ResultSet rs = CassandraUtils.execute(session, pStmGetRow, counterName, yyyymm, dd);
+        ResultSet rs = CqlUtils.execute(getSession(), cqlGetRow, counterName, yyyymm, dd);
         for (Iterator<Row> it = rs.iterator(); it.hasNext();) {
             Row row = it.next();
             long key = row.getLong(CqlTemplate.COL_COUNTER_TIMESTAMP);

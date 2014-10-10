@@ -1,17 +1,11 @@
 package com.github.ddth.tsc.cassandra;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
-import com.github.ddth.cacheadapter.AbstractCacheFactory;
 import com.github.ddth.cacheadapter.ICacheFactory;
-import com.github.ddth.cacheadapter.guava.GuavaCacheFactory;
+import com.github.ddth.cql.SessionManager;
 import com.github.ddth.tsc.AbstractCounterFactory;
 import com.github.ddth.tsc.ICounter;
 import com.github.ddth.tsc.cassandra.internal.CounterMetadata;
@@ -25,68 +19,125 @@ import com.github.ddth.tsc.cassandra.internal.MetadataManager;
  */
 public class CassandraCounterFactory extends AbstractCounterFactory {
 
-    private final static String[] EMPTY_STRING_ARR = new String[0];
-
     private final Logger LOGGER = LoggerFactory.getLogger(CassandraCounterFactory.class);
 
-    private List<String> hosts = new ArrayList<String>();
+    /*
+     * Cassandra hosts & ports, username and password See:
+     * https://github.com/DDTH/ddth-cql-utils
+     */
+    private String hostsAndPorts, username, password;
     private String keyspace, tableMetadata = MetadataManager.DEFAULT_METADATA_TABLE;
-    private int port = 9042;
-    private boolean myOwnCluster = false;
-    private Cluster cluster;
-    private Session session;
+    private SessionManager sessionManager;
     private ICacheFactory cacheFactory;
-    private boolean cacheEnabled = true;
 
     private MetadataManager metadataManager;
 
-    public CassandraCounterFactory addHost(String host) {
-        hosts.add(host);
+    /**
+     * Hosts & Ports to connect to Cassandra cluster.
+     * 
+     * @return
+     * @since 0.6.0
+     * @see https://github.com/DDTH/ddth-cql-utils
+     */
+    protected String getHostsAndPorts() {
+        return hostsAndPorts;
+    }
+
+    /**
+     * Hosts & Ports to connect to Cassandra cluster.
+     * 
+     * @param hostsAndPorts
+     * @return
+     * @since 0.6.0
+     * @see https://github.com/DDTH/ddth-cql-utils
+     */
+    public CassandraCounterFactory setHostsAndPorts(String hostsAndPorts) {
+        this.hostsAndPorts = hostsAndPorts;
         return this;
     }
 
-    public String getHost() {
-        return hosts.size() > 0 ? hosts.get(0) : null;
+    /**
+     * Username to connect to Cassandra cluster.
+     * 
+     * @return
+     * @since 0.6.0
+     * @see https://github.com/DDTH/ddth-cql-utils
+     */
+    protected String getUsername() {
+        return username;
     }
 
-    public CassandraCounterFactory setHost(String host) {
-        hosts.clear();
-        hosts.add(host);
+    /**
+     * Username to connect to Cassandra cluster.
+     * 
+     * @param username
+     * @return
+     * @since 0.6.0
+     * @see https://github.com/DDTH/ddth-cql-utils
+     */
+    public CassandraCounterFactory setUsername(String username) {
+        this.username = username;
         return this;
     }
 
-    public Collection<String> getHosts() {
-        return this.hosts;
+    /**
+     * Password to connect to Cassandra cluster.
+     * 
+     * @return
+     * @since 0.6.0
+     * @see https://github.com/DDTH/ddth-cql-utils
+     */
+    protected String getPassword() {
+        return password;
     }
 
-    public CassandraCounterFactory setHosts(Collection<String> hosts) {
-        this.hosts.clear();
-        if (hosts != null) {
-            this.hosts.addAll(hosts);
-        }
+    /**
+     * Password to connect to Cassandra cluster.
+     * 
+     * @param password
+     * @return
+     * @since 0.6.0
+     * @see https://github.com/DDTH/ddth-cql-utils
+     */
+    public CassandraCounterFactory setPassword(String password) {
+        this.password = password;
         return this;
     }
 
-    public CassandraCounterFactory setHosts(String[] hosts) {
-        this.hosts.clear();
-        if (hosts != null) {
-            for (String host : hosts) {
-                this.hosts.add(host);
-            }
-        }
+    /**
+     * Cassandra session manager.
+     * 
+     * @return
+     * @since 0.6.0
+     * @see https://github.com/DDTH/ddth-cql-utils
+     */
+    protected SessionManager getSessionManager() {
+        return sessionManager;
+    }
+
+    /**
+     * Cassandra session manager.
+     * 
+     * @param sessionManager
+     * @return
+     * @since 0.6.0
+     * @see https://github.com/DDTH/ddth-cql-utils
+     */
+    public CassandraCounterFactory setSessionManager(SessionManager sessionManager) {
+        this.sessionManager = sessionManager;
         return this;
     }
 
-    public int getPort() {
-        return port;
+    protected ICacheFactory getCacheFactory() {
+        return cacheFactory;
     }
 
-    public CassandraCounterFactory setPort(int port) {
-        this.port = port;
+    public CassandraCounterFactory setCacheFactory(ICacheFactory cacheFactory) {
+        this.cacheFactory = cacheFactory;
         return this;
     }
 
-    public String getKeyspace() {
+    protected String getKeyspace() {
         return keyspace;
     }
 
@@ -95,7 +146,7 @@ public class CassandraCounterFactory extends AbstractCounterFactory {
         return this;
     }
 
-    public String getTableMetadata() {
+    protected String getTableMetadata() {
         return tableMetadata;
     }
 
@@ -104,41 +155,16 @@ public class CassandraCounterFactory extends AbstractCounterFactory {
         return this;
     }
 
-    public CassandraCounterFactory setCluster(Cluster cluster) {
-        if (session != null) {
-            session.close();
-            session = null;
-        }
-        if (this.cluster != null && myOwnCluster) {
-            this.cluster.close();
-        }
-        this.cluster = cluster;
-        myOwnCluster = false;
-
-        return this;
-    }
-
-    public Cluster getCluster() {
-        return cluster;
-    }
-
     /**
      * {@inheritDoc}
      */
     @Override
     public CassandraCounterFactory init() {
-        if (cluster == null) {
-            cluster = Cluster.builder().addContactPoints(hosts.toArray(EMPTY_STRING_ARR))
-                    .withPort(port).build();
-            myOwnCluster = true;
-        }
-        session = cluster.connect(keyspace);
-
         metadataManager = new MetadataManager();
-        metadataManager.setCluster(cluster).setKeyspace(keyspace).setTableMetadata(tableMetadata);
+        metadataManager.setHostsAndPorts(hostsAndPorts).setUsername(username).setPassword(password)
+                .setKeyspace(keyspace).setTableMetadata(tableMetadata)
+                .setSessionManager(sessionManager);
         metadataManager.init();
-
-        initCache();
 
         return (CassandraCounterFactory) super.init();
     }
@@ -157,89 +183,6 @@ public class CassandraCounterFactory extends AbstractCounterFactory {
                 metadataManager = null;
             }
         }
-
-        if (session != null) {
-            try {
-                session.close();
-            } catch (Exception e) {
-                LOGGER.warn(e.getMessage(), e);
-            } finally {
-                session = null;
-            }
-        }
-
-        if (cluster != null && myOwnCluster) {
-            try {
-                cluster.close();
-            } catch (Exception e) {
-                LOGGER.warn(e.getMessage(), e);
-            } finally {
-                cluster = null;
-            }
-        }
-
-        try {
-            destroyCache();
-        } catch (Exception e) {
-            LOGGER.warn(e.getMessage(), e);
-        }
-
-        try {
-            super.destroy();
-        } catch (Exception e) {
-            LOGGER.warn(e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Enables/Disables cache.
-     * 
-     * @param cacheEnabled
-     * @return
-     * @since 0.5.1
-     */
-    public CassandraCounterFactory setCacheEnabled(boolean cacheEnabled) {
-        this.cacheEnabled = cacheEnabled;
-        return this;
-    }
-
-    /**
-     * Is cache enabled?
-     * 
-     * @return
-     * @since 0.5.1
-     */
-    public boolean getCacheEnabled() {
-        return cacheEnabled;
-    }
-
-    /**
-     * Is cache enabled?
-     * 
-     * @return
-     * @since 0.5.1
-     */
-    public boolean isCacheEnabled() {
-        return cacheEnabled;
-    }
-
-    /**
-     * @since 0.4.2
-     */
-    protected void initCache() {
-        if (cacheEnabled) {
-            cacheFactory = new GuavaCacheFactory().setDefaultCacheCapacity(10000)
-                    .setDefaultExpireAfterAccess(3600).init();
-        }
-    }
-
-    /**
-     * @since 0.4.2
-     */
-    protected void destroyCache() {
-        if (cacheFactory != null) {
-            ((AbstractCacheFactory) cacheFactory).destroy();
-        }
     }
 
     /**
@@ -249,7 +192,7 @@ public class CassandraCounterFactory extends AbstractCounterFactory {
      * @since 0.4.1
      */
     protected Session getSession() {
-        return session;
+        return sessionManager.getSession(hostsAndPorts, username, password, keyspace);
     }
 
     /**
@@ -274,9 +217,11 @@ public class CassandraCounterFactory extends AbstractCounterFactory {
         }
 
         CassandraCounter counter = new CassandraCounter();
+        counter.setMetadata(metadata);
         counter.setName(name).setCounterFactory(this);
-        counter.setSession(getSession()).setMetadata(metadata)
-                .setCacheFactory(cacheEnabled ? cacheFactory : null);
+        counter.setHostsAndPorts(hostsAndPorts).setUsername(username).setPassword(password)
+                .setKeyspace(keyspace).setSessionManager(sessionManager);
+        counter.setCacheFactory(cacheFactory);
         counter.init();
         return counter;
     }

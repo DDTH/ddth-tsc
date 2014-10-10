@@ -1,6 +1,12 @@
 ddth-tsc project release notes
 ==============================
 
+0.6.0 - 2014-10-10
+------------------
+- `CassandraCounterFactory`: Use [ddth-cql-utils](https://github.com/DDTH/ddth-cql-utils) to access Cassandra storage.
+- `CassandraCounterFactory`: Use [ddth-cache-adapter](https://github.com/DDTH/ddth-cache-adapter) for caching.
+
+
 0.5.1 - 2014-08-06
 ------------------
 - `CassandraCounterFactory`: cache can be enabled/disabled.
