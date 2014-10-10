@@ -18,7 +18,7 @@
 	<properties>
 		<version.datastax-cassandra>2.1.1</version.datastax-cassandra>
 		<version.ddth-commons>0.2.2.3</version.ddth-commons>
-		<version.ddth-cql-utils>0.2.0</version.ddth-cql-utils>
+		<version.ddth-cql-utils>0.2.0.1</version.ddth-cql-utils>
 		<version.ddth-cache-adapter>0.1.2</version.ddth-cache-adapter>
 		<version.guava>16.0.1</version.guava>
 	</properties>
