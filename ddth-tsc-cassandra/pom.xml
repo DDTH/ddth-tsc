@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
@@ -16,31 +17,27 @@
 	<url>https://github.com/DDTH/ddth-tsc</url>
 
 	<properties>
-		<version.datastax-cassandra>2.1.1</version.datastax-cassandra>
-		<version.ddth-commons>0.2.2.3</version.ddth-commons>
-		<version.ddth-cql-utils>0.2.0.1</version.ddth-cql-utils>
-		<version.ddth-cache-adapter>0.1.2</version.ddth-cache-adapter>
-		<version.guava>16.0.1</version.guava>
+		<version.jackson>2.6.0</version.jackson>
 	</properties>
 
 	<dependencies>
 		<dependency>
 			<groupId>org.apache.cassandra</groupId>
 			<artifactId>cassandra-all</artifactId>
-			<version>2.1.0</version>
+			<version>2.2.0</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-pool2</artifactId>
-			<version>2.2</version>
+			<version>2.4.1</version>
 			<scope>test</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>com.datastax.cassandra</groupId>
 			<artifactId>cassandra-driver-core</artifactId>
-			<version>${version.datastax-cassandra}</version>
+			<version>2.1.7.1</version>
 		</dependency>
 
 		<dependency>
@@ -48,21 +45,32 @@
 			<artifactId>ddth-tsc</artifactId>
 			<version>0.6.1-SNAPSHOT</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>com.github.ddth</groupId>
 			<artifactId>ddth-cache-adapter</artifactId>
-			<version>${version.ddth-cache-adapter}</version>
+			<version>0.2.1.8</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.ddth</groupId>
+			<artifactId>ddth-redis</artifactId>
+			<version>0.4.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>18.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.github.ddth</groupId>
 			<artifactId>ddth-cql-utils</artifactId>
-			<version>${version.ddth-cql-utils}</version>
+			<version>0.2.3</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.ddth</groupId>
 			<artifactId>ddth-commons</artifactId>
-			<version>${version.ddth-commons}</version>
+			<version>0.3.2</version>
 		</dependency>
 
 		<dependency>
@@ -79,12 +87,6 @@
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-annotations</artifactId>
 			<version>${version.jackson}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>com.google.guava</groupId>
-			<artifactId>guava</artifactId>
-			<version>${version.guava}</version>
 		</dependency>
 	</dependencies>
 

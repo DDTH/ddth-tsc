@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
+import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.github.ddth.commons.utils.DPathUtils;
@@ -196,7 +197,8 @@ public class MetadataManager {
      * @throws RowNotFoundException
      */
     private String _read(String rowKey) throws RowNotFoundException {
-        Row row = CqlUtils.executeOne(getSession(), cqlGetMetadata, rowKey);
+        Row row = CqlUtils.executeOne(getSession(), cqlGetMetadata, ConsistencyLevel.LOCAL_QUORUM,
+                rowKey);
         String jsonString = row != null ? row.getString("o") : null;
         if (jsonString != null) {
             return jsonString;

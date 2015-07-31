@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
@@ -248,14 +249,14 @@ public class CassandraCounter extends AbstractCounter {
         int[] yyyymm_dd = toYYYYMM_DD(timestampMs);
 
         if (!metadata.isCounterColumn) {
-            Row row = CqlUtils.executeOne(getSession(), cqlGet, getName(), yyyymm_dd[0],
-                    yyyymm_dd[1], key.longValue());
+            Row row = CqlUtils.executeOne(getSession(), cqlGet, ConsistencyLevel.LOCAL_QUORUM,
+                    getName(), yyyymm_dd[0], yyyymm_dd[1], key.longValue());
             long currentValue = row != null ? row.getLong("v") : 0;
             long newValue = value + currentValue;
             set(timestampMs, newValue);
         } else {
-            CqlUtils.executeNonSelect(getSession(), cqlAdd, value, getName(), yyyymm_dd[0],
-                    yyyymm_dd[1], key.longValue());
+            CqlUtils.executeNonSelectAsync(getSession(), cqlAdd, ConsistencyLevel.LOCAL_ONE, value,
+                    getName(), yyyymm_dd[0], yyyymm_dd[1], key.longValue());
         }
         ICache cache = getCache();
         if (cache != null) {
@@ -272,14 +273,14 @@ public class CassandraCounter extends AbstractCounter {
         int[] yyyymm_dd = toYYYYMM_DD(timestampMs);
 
         if (metadata.isCounterColumn) {
-            Row row = CqlUtils.executeOne(getSession(), cqlGet, getName(), yyyymm_dd[0],
-                    yyyymm_dd[1], key.longValue());
+            Row row = CqlUtils.executeOne(getSession(), cqlGet, ConsistencyLevel.LOCAL_QUORUM,
+                    getName(), yyyymm_dd[0], yyyymm_dd[1], key.longValue());
             long currentValue = row != null ? row.getLong("v") : 0;
             long delta = value - currentValue;
             add(timestampMs, delta);
         } else {
-            CqlUtils.executeNonSelect(getSession(), cqlSet, value, getName(), yyyymm_dd[0],
-                    yyyymm_dd[1], key.longValue());
+            CqlUtils.executeNonSelectAsync(getSession(), cqlSet, ConsistencyLevel.LOCAL_ONE, value,
+                    getName(), yyyymm_dd[0], yyyymm_dd[1], key.longValue());
         }
         ICache cache = getCache();
         if (cache != null) {
@@ -367,7 +368,8 @@ public class CassandraCounter extends AbstractCounter {
     private Map<Long, DataPoint> _getRow(String counterName, int yyyymm, int dd) {
         Map<Long, DataPoint> result = new HashMap<Long, DataPoint>();
 
-        ResultSet rs = CqlUtils.execute(getSession(), cqlGetRow, counterName, yyyymm, dd);
+        ResultSet rs = CqlUtils.execute(getSession(), cqlGetRow, ConsistencyLevel.LOCAL_ONE,
+                counterName, yyyymm, dd);
         for (Iterator<Row> it = rs.iterator(); it.hasNext();) {
             Row row = it.next();
             long key = row.getLong(CqlTemplate.COL_COUNTER_TIMESTAMP);

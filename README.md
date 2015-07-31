@@ -1,7 +1,7 @@
 ddth-tsc
 ========
 
-DDTH's Time Series Counter.
+DDTH's Time Series Counter library.
 
 Project home:
 [https://github.com/DDTH/ddth-tsc](https://github.com/DDTH/ddth-tsc)
@@ -9,16 +9,9 @@ Project home:
 OSGi environment: ddth-tsc modules are packaged as an OSGi bundle.
 
 
-## License ##
+## Modules ##
 
-See LICENSE.txt for details. Copyright (c) 2014 Thanh Ba Nguyen.
-
-Third party libraries are distributed under their own licenses.
-
-
-## Modules #
-
-ddth-tsc modules are released via Maven. Latest release version: `0.6.0`. See [RELEASE-NOTES.md](RELEASE-NOTES.md).
+ddth-tsc modules are released via Maven. Latest release version: `0.6.1`. See [RELEASE-NOTES.md](RELEASE-NOTES.md).
 
 Maven dependency:
 
@@ -26,7 +19,7 @@ Maven dependency:
 <dependency>
 	<groupId>com.github.ddth</groupId>
 	<artifactId>ddth-tsc-<module></artifactId>
-	<version>0.6.0</version>
+	<version>0.6.1</version>
 </dependency>
 ```
 
@@ -123,3 +116,10 @@ Finally: destroy the factory when done
 - `get()`: get a single data point value
 - `getSeries(...)`: get a series of data points
 - `getLastN(...)`: get last N data points
+
+
+## License ##
+
+See LICENSE.txt for details. Copyright (c) 2014-2015 Thanh Ba Nguyen.
+
+Third party libraries are distributed under their own licenses.
