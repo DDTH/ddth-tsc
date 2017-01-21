@@ -1,5 +1,16 @@
-ddth-tsc project release notes
-==============================
+ddth-tsc release notes
+======================
+
+0.7.0 - 2017-01-22
+------------------
+
+- Refactor & Restructure project.
+- Bump to `com.github.ddth:ddth-parent:6`, now requires Java 8+.
+- Redis counter:
+  - Switch to `Jedis` (https://github.com/xetorthio/jedis).
+  - Support sharded-Redis
+- Add new unit test cases.
+
 
 0.6.1 - 2015-07-30
 ------------------

@@ -1,98 +1,37 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
 		<groupId>com.github.ddth</groupId>
-		<artifactId>ddth-tsc-parent</artifactId>
+		<artifactId>ddth-tsc</artifactId>
 		<version>0.6.2-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>ddth-tsc-redis</artifactId>
 	<version>0.6.2-SNAPSHOT</version>
-	<packaging>bundle</packaging>
+	<packaging>pom</packaging>
 
 	<name>ddth-tsc-redis</name>
-	<description>DDTH's Time Series Counter: with Redis as storage backend.</description>
+	<description>DDTH's Time Series Counter: write counter data to Redis.</description>
 	<url>https://github.com/DDTH/ddth-tsc</url>
 
-	<repositories>
-		<repository>
-			<id>clojars.org</id>
-			<url>http://clojars.org/repo</url>
-		</repository>
-	</repositories>
-
 	<properties>
-		<version.ddth-commons>0.2.1.1</version.ddth-commons>
-		<version.ddth-redis>0.3.1</version.ddth-redis>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
 	<dependencies>
 		<dependency>
-			<groupId>redis.embedded</groupId>
-			<artifactId>embedded-redis</artifactId>
-			<version>0.2</version>
-			<scope>test</scope>
-			<exclusions>
-				<exclusion>
-					<groupId>com.google.guava</groupId>
-					<artifactId>guava-io</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-
-		<dependency>
 			<groupId>com.github.ddth</groupId>
-			<artifactId>ddth-tsc</artifactId>
+			<artifactId>ddth-tsc-core</artifactId>
 			<version>0.6.2-SNAPSHOT</version>
 		</dependency>
+
+		<!-- for Redis-based tsc -->
 		<dependency>
-			<groupId>com.github.ddth</groupId>
-			<artifactId>ddth-redis</artifactId>
-			<version>${version.ddth-redis}</version>
+			<groupId>redis.clients</groupId>
+			<artifactId>jedis</artifactId>
+			<version>${version.jedis}</version>
 		</dependency>
 	</dependencies>
-
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.felix</groupId>
-				<artifactId>maven-bundle-plugin</artifactId>
-				<extensions>true</extensions>
-				<configuration>
-					<instructions>
-						<!-- <Bundle-Activator></Bundle-Activator> -->
-						<Export-Package>com.github.ddth.tsc.redis</Export-Package>
-						<!-- <Import-Package></Import-Package> -->
-					</instructions>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.9</version>
-				<configuration>
-					<forkMode>always</forkMode>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>distro-assembly</id>
-						<phase>package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
-						<configuration>
-							<descriptors>
-								<descriptor>assembly/ddth-tsc-redis-withdeps.xml</descriptor>
-							</descriptors>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
-	</build>
 </project>
